@@ -1,38 +1,9 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* src/App.css */
+.container { font-family: sans-serif; max-width: 600px; margin: 40px auto; text-align: center; }
+.grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin: 20px 0; }
+button { padding: 12px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; background: white; }
+button.selected { background: #007bff; color: white; border-color: #0056b3; font-weight: bold; }
+.play-button { background: #28a745; color: white; padding: 15px 30px; font-size: 1.2rem; border: none; border-radius: 8px; margin-top: 20px; width: 100%; }
+.result-box { margin-top: 30px; padding: 20px; background: #e9ecef; border-radius: 10px; border-left: 5px solid #28a745; }
+.error-box { color: #721c24; background: #f8d7da; padding: 10px; margin-top: 10px; border-radius: 4px; }
+.won-amount { font-size: 1.5rem; color: #28a745; font-weight: bold; }
