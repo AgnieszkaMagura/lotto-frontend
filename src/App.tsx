@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import axios from 'axios';
 import './App.css';
-import { LottoGame, ResultDto } from './types';
+import {LottoGame, ResultDto} from './types';
 
 const App: React.FC = () => {
     const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
@@ -9,6 +9,11 @@ const App: React.FC = () => {
     const [gameResult, setGameResult] = useState<ResultDto | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [allTickets, setAllTickets] = useState<LottoGame[]>(() => {
+        const saved = localStorage.getItem('lotto_history');
+        // Jeśli znaleźliśmy dane, parsujemy je z tekstu na obiekt, jeśli nie - dajemy pustą tablicę
+        return saved ? JSON.parse(saved) : [];
+    });
 
     // Inicjalizacja stanu Dark Mode z localStorage
     const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -25,6 +30,17 @@ const App: React.FC = () => {
             localStorage.setItem('theme', 'light');
         }
     }, [darkMode]);
+
+    useEffect(() => {
+        localStorage.setItem('lotto_history', JSON.stringify(allTickets));
+    }, [allTickets]);
+
+    const clearHistory = () => {
+        if (window.confirm("Are you sure you want to delete all tickets?")) {
+            setAllTickets([]);
+            localStorage.removeItem('lotto_history');
+        }
+    };
 
     const toggleDarkMode = () => setDarkMode(!darkMode);
 
@@ -57,6 +73,7 @@ const App: React.FC = () => {
                 inputNumbers: selectedNumbers
             });
             setTicket(response.data);
+            setAllTickets(prev => [response.data, ...prev]);
         } catch (err) {
             setError("Error while sending the ticket.");
         } finally {
@@ -83,11 +100,18 @@ const App: React.FC = () => {
         }
     };
 
+    const playAgain = () => {
+        setSelectedNumbers([]); // Czyścimy wybrane numery
+        setTicket(null);        // Usuwamy zarejestrowany bilet
+        setGameResult(null);        // Usuwamy wynik losowania
+        setError(null);         // czyścimy ewentualne błędy
+    };
+
 
     return (
         <div className="container">
             {/* Przycisk przełączania motywu */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{display: 'flex', justifyContent: 'flex-end'}}>
                 <button onClick={toggleDarkMode} className="theme-toggle">
                     {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
                 </button>
@@ -121,7 +145,7 @@ const App: React.FC = () => {
             )}
 
             <div className="grid">
-                {Array.from({ length: 99 }, (_, i) => i + 1).map(num => (
+                {Array.from({length: 99}, (_, i) => i + 1).map(num => (
                     <button
                         key={num}
                         onClick={() => toggleNumber(num)}
@@ -157,7 +181,9 @@ const App: React.FC = () => {
                     {gameResult.responseDto ? (
                         <div className="details">
                             <p>Your Matches: <strong>
-                                {Array.from(gameResult.responseDto.hitNumbers).join(', ')}
+                                {Array.from(gameResult.responseDto.hitNumbers).length > 0
+                                    ? Array.from(gameResult.responseDto.hitNumbers).join(', ')
+                                    : "None"}
                             </strong></p>
                             <p>Status: {gameResult.responseDto.isWinner ? "WINNER! 🎉" : "TRY AGAIN 😢"}</p>
                         </div>
@@ -166,8 +192,32 @@ const App: React.FC = () => {
                             <p>Draw Date: {ticket?.ticketDto.drawDate}</p>
                         </div>
                     )}
+
+                    {/* Przycisk resetu gry - teraz bezpiecznie wewnątrz bloku gameResult */}
+                    <button onClick={playAgain} className="play-again-button">
+                        🔄 Buy Another Ticket
+                    </button>
                 </div>
             )}
+            <div className="history-container">
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <h2>Your Purchase History</h2>
+                    {allTickets.length > 0 && (
+                        <button onClick={clearHistory} className="clear-history-btn">🗑️ Clear</button>
+                    )}
+                </div>
+                {allTickets.length === 0 ? (
+                    <p>No tickets purchased yet.</p>
+                ) : (
+                    allTickets.map((t, index) => (
+                        <div key={t.ticketDto.hash} className="history-item">
+                            <span>#{allTickets.length - index}</span>
+                            <p>Numbers: <strong>{t.ticketDto.numbers.join(', ')}</strong></p>
+                            <small>ID: {t.ticketDto.hash}</small>
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
     );
 };

@@ -128,3 +128,45 @@ button.selected {
     color: white !important;
     border-color: #ff4d4d;
 }
+
+.play-again-button {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 20px;
+    width: 100%;
+    padding: 15px;
+    border-radius: 8px;
+    border: none;
+    transition: transform 0.2s ease;
+}
+
+.play-again-button:hover {
+    transform: scale(1.02); /* Lekkie powiększenie przy najechaniu */
+    filter: brightness(1.1);
+}
+
+.history-container {
+    margin-top: 50px;
+    border-top: 2px dashed var(--border-color);
+    padding-top: 20px;
+    text-align: left;
+}
+
+.history-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.history-item span {
+    color: var(--primary-color);
+    font-weight: bold;
+    font-size: 0.8rem;
+}
