@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 import { LottoGame, ResultDto } from './types';
@@ -9,6 +9,24 @@ const App: React.FC = () => {
     const [gameResult, setGameResult] = useState<ResultDto | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Inicjalizacja stanu Dark Mode z localStorage
+    const [darkMode, setDarkMode] = useState<boolean>(() => {
+        return localStorage.getItem('theme') === 'dark';
+    });
+
+    // Efekt zarządzający motywem i zapisem w przeglądarce
+    useEffect(() => {
+        if (darkMode) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [darkMode]);
+
+    const toggleDarkMode = () => setDarkMode(!darkMode);
 
     const toggleNumber = (num: number) => {
         setError(null);
@@ -39,7 +57,7 @@ const App: React.FC = () => {
     const checkResult = async () => {
         if (!ticket) return;
         setLoading(true);
-        setError(null); // Clears previous error messages before a new check
+        setError(null);
         try {
             const response = await axios.get<ResultDto>(`http://localhost:8080/results/${ticket.ticketDto.hash}`);
             setGameResult(response.data);
@@ -55,11 +73,18 @@ const App: React.FC = () => {
         }
     };
 
+
     return (
         <div className="container">
+            {/* Przycisk przełączania motywu */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button onClick={toggleDarkMode} className="theme-toggle">
+                    {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+                </button>
+            </div>
+
             <h1>Lotto Full-Stack App</h1>
 
-            {/* Only show the error banner if we don't have a successful result yet */}
             {error && !gameResult?.responseDto && (
                 <div className="error-box">{error}</div>
             )}

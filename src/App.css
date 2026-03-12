@@ -7,3 +7,68 @@ button.selected { background: #007bff; color: white; border-color: #0056b3; font
 .result-box { margin-top: 30px; padding: 20px; background: #e9ecef; border-radius: 10px; border-left: 5px solid #28a745; }
 .error-box { color: #721c24; background: #f8d7da; padding: 10px; margin-top: 10px; border-radius: 4px; }
 .won-amount { font-size: 1.5rem; color: #28a745; font-weight: bold; }
+
+/* App.css */
+/* App.css */
+:root {
+    --bg-color: #ffffff;
+    --text-color: #212121;
+    --card-bg: #f9f9f9;
+    --border-color: #dddddd;
+    --button-bg: #ffffff;
+}
+
+[data-theme='dark'] {
+    --bg-color: #121212;
+    --text-color: #f5f5f5;
+    --card-bg: #1e1e1e;
+    --border-color: #444444;
+    --button-bg: #2d2d2d;
+}
+
+body {
+    background-color: var(--bg-color);
+    margin: 0;
+}
+
+.container {
+    font-family: sans-serif;
+    max-width: 600px;
+    margin: 40px auto;
+    text-align: center;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: 0.3s ease;
+    padding: 20px;
+    border-radius: 15px;
+}
+
+/* Przyciski w siatce */
+button {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    background: var(--button-bg);
+    color: var(--text-color);
+}
+
+/* Boxy z wynikami i biletami */
+.ticket-box, .result-box {
+    margin-top: 30px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    color: var(--text-color);
+}
+
+.result-box { border-left: 5px solid #28a745; }
+
+/* Przełącznik Dark Mode */
+.theme-toggle {
+    margin-bottom: 20px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
