@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import axios from 'axios';
 import './App.css';
-import { LottoGame, ResultDto } from './types';
+import {LottoGame, ResultDto} from './types';
 
 const App: React.FC = () => {
     // --- AUTH STATE ---
     const [user, setUser] = useState<string | null>(localStorage.getItem('user'));
-    const [authData, setAuthData] = useState({ username: '', password: '' });
+    const [authData, setAuthData] = useState({username: '', password: ''});
     const [isRegistering, setIsRegistering] = useState(false);
 
     // --- GAME STATE ---
@@ -22,8 +22,7 @@ const App: React.FC = () => {
 
     const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem('theme') === 'dark');
 
-    // --- SHARED REGEX FOR SPECIAL CHARACTERS (including dot, slashes, etc.) ---
-    const specialCharRegex = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?\.]/;
+    const specialCharRegex = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/;
 
     // --- THEME & HISTORY EFFECTS ---
     useEffect(() => {
@@ -37,13 +36,12 @@ const App: React.FC = () => {
 
     // --- PASSWORD VALIDATION HELPER ---
     const isPasswordValid = (password: string) => {
-        // Min 6 chars, 1 uppercase, and 1 special char from our expanded list
         const passwordRegex = new RegExp(`^(?=.*[A-Z])(?=.*${specialCharRegex.source})(?=.{6,})`);
         return passwordRegex.test(password);
     };
 
     // --- AUTH FUNCTIONS ---
-    const handleAuth = async (e: React.FormEvent) => {
+    const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
@@ -63,14 +61,14 @@ const App: React.FC = () => {
             });
 
             if (!isRegistering) {
-                const { username, token } = response.data;
+                const {username, token} = response.data;
                 setUser(username);
                 localStorage.setItem('user', username);
                 localStorage.setItem('token', token);
             } else {
                 alert(`User ${response.data.username} created! Please log in.`);
                 setIsRegistering(false);
-                setAuthData({ username: '', password: '' });
+                setAuthData({username: '', password: ''});
             }
         } catch (err: any) {
             setError(err.response?.status === 403 ? "Invalid credentials." : "Server error.");
@@ -113,8 +111,8 @@ const App: React.FC = () => {
         const token = localStorage.getItem('token');
         try {
             const response = await axios.post<LottoGame>('http://localhost:8080/inputNumbers',
-                { inputNumbers: selectedNumbers },
-                { headers: { Authorization: `Bearer ${token}` } }
+                {inputNumbers: selectedNumbers},
+                {headers: {Authorization: `Bearer ${token}`}}
             );
             setTicket(response.data);
             setAllTickets(prev => [response.data, ...prev]);
@@ -129,15 +127,21 @@ const App: React.FC = () => {
         if (!ticket) return;
         setLoading(true);
         setError(null);
+        setGameResult(null);
 
         const token = localStorage.getItem('token');
         try {
             const response = await axios.get<ResultDto>(`http://localhost:8080/results/${ticket.ticketDto.hash}`,
-                { headers: { Authorization: `Bearer ${token}` } }
+                {headers: {Authorization: `Bearer ${token}`}}
             );
             setGameResult(response.data);
         } catch (err: any) {
-            setError(err.response?.status === 404 ? "Result is not ready yet." : "Server error.");
+            if (err.response?.status === 404) {
+                // To trafi do stanu error i wyświetli się pod przyciskiem
+                setError("The draw results are not available yet. Official draws take place every Saturday at 12:00 PM. Please come back after that time!");
+            } else {
+                setError("Server error. Please try again later.");
+            }
         } finally {
             setLoading(false);
         }
@@ -159,11 +163,10 @@ const App: React.FC = () => {
 
     const toggleDarkMode = () => setDarkMode(!darkMode);
 
-    // --- RENDER LOGIN/REGISTER PAGE ---
     if (!user) {
         return (
             <div className="container auth-page">
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{display: 'flex', justifyContent: 'flex-end'}}>
                     <button onClick={toggleDarkMode} className="theme-toggle">{darkMode ? '☀️' : '🌙'}</button>
                 </div>
                 <h1>{isRegistering ? 'Create Account' : 'Login to Play'}</h1>
@@ -173,26 +176,25 @@ const App: React.FC = () => {
                         placeholder="Username"
                         required
                         value={authData.username}
-                        onChange={(e) => setAuthData({ ...authData, username: e.target.value })}
+                        onChange={(e) => setAuthData({...authData, username: e.target.value})}
                     />
                     <input
                         type="password"
                         placeholder="Password"
                         required
                         value={authData.password}
-                        onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                        onChange={(e) => setAuthData({...authData, password: e.target.value})}
                     />
 
                     {isRegistering && (
                         <div className="password-hints">
-                            <p style={{ color: authData.password.length >= 6 ? '#2ecc71' : '#e74c3c' }}>
+                            <p style={{color: authData.password.length >= 6 ? '#2ecc71' : '#e74c3c'}}>
                                 {authData.password.length >= 6 ? '✓' : '○'} Min. 6 characters
                             </p>
-                            <p style={{ color: /[A-Z]/.test(authData.password) ? '#2ecc71' : '#e74c3c' }}>
+                            <p style={{color: /[A-Z]/.test(authData.password) ? '#2ecc71' : '#e74c3c'}}>
                                 {/[A-Z]/.test(authData.password) ? '✓' : '○'} One uppercase letter
                             </p>
-                            {/* Updated this part to use the expanded regex for real-time hint coloring */}
-                            <p style={{ color: specialCharRegex.test(authData.password) ? '#2ecc71' : '#e74c3c' }}>
+                            <p style={{color: specialCharRegex.test(authData.password) ? '#2ecc71' : '#e74c3c'}}>
                                 {specialCharRegex.test(authData.password) ? '✓' : '○'} One special character
                             </p>
                         </div>
@@ -213,7 +215,6 @@ const App: React.FC = () => {
         );
     }
 
-    // --- RENDER GAME PAGE ---
     return (
         <div className="container">
             <div className="header-actions">
@@ -237,20 +238,17 @@ const App: React.FC = () => {
                     Welcome to the <strong>Lotto Full-Stack Experience</strong>! To participate, please select exactly
                     <strong> 6 unique numbers</strong> from the interactive grid below (1-99).
                 </p>
-                <p>
-                    Short on time? Use the <strong>"🎲 QUICK PICK"</strong> button to instantly generate a set of
-                    random lucky numbers! Once you're ready, click <strong>"Register Ticket"</strong> to secure your entry.
-                </p>
                 <div className="draw-status-pill">
                     <span className="calendar-icon">📅</span>
                     <span>Next Official Draw: <strong>Every Saturday at 12:00 PM</strong></span>
                 </div>
             </div>
 
-            {error && <div className="error-box">{error}</div>}
+            {/* Ten błąd wyświetla się na górze strony */}
+            {error && !ticket && <div className="error-box">{error}</div>}
 
             <div className="grid">
-                {Array.from({ length: 99 }, (_, i) => i + 1).map(num => (
+                {Array.from({length: 99}, (_, i) => i + 1).map(num => (
                     <button key={num} onClick={() => toggleNumber(num)}
                             className={selectedNumbers.includes(num) ? 'selected' : ''}>
                         {num}
@@ -269,7 +267,16 @@ const App: React.FC = () => {
                     <h3>Ticket Registered!</h3>
                     <p>ID: <code>{ticket.ticketDto.hash}</code></p>
                     <p>Numbers: {ticket.ticketDto.numbers.join(', ')}</p>
-                    <button onClick={checkResult} className="check-button">2. CHECK IF YOU WON</button>
+                    <button onClick={checkResult} className="check-button" disabled={loading}>
+                        {loading ? 'Checking...' : '2. CHECK IF YOU WON'}
+                    </button>
+
+                    {/* KLUCZOWA POPRAWKA: Wyświetlanie błędu bezpośrednio pod przyciskiem sprawdzenia */}
+                    {error && (
+                        <div className="error-box" style={{ marginTop: '15px', backgroundColor: 'rgba(231, 76, 60, 0.1)' }}>
+                            {error}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -286,16 +293,19 @@ const App: React.FC = () => {
                             <p>Status: {gameResult.responseDto.isWinner ? "WINNER! 🎉" : "TRY AGAIN 😢"}</p>
                         </div>
                     ) : (
-                        <p>Draw Date: {ticket?.ticketDto.drawDate}</p>
+                        <div className="not-ready-info">
+                            <p>Draw Date: <strong>{ticket?.ticketDto.drawDate}</strong></p>
+                        </div>
                     )}
                     <button onClick={playAgain} className="play-again-button">🔄 Buy Another Ticket</button>
                 </div>
             )}
 
             <div className="history-container">
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{display: 'flex', justifyContent: 'space-between'}}>
                     <h2>Purchase History</h2>
-                    {allTickets.length > 0 && <button onClick={clearHistory} className="clear-history-btn">🗑️ Clear</button>}
+                    {allTickets.length > 0 &&
+                        <button onClick={clearHistory} className="clear-history-btn">🗑️ Clear</button>}
                 </div>
                 {allTickets.length === 0 ? <p>No tickets yet.</p> :
                     allTickets.map((t, idx) => (
