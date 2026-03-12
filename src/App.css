@@ -170,3 +170,36 @@ button.selected {
     font-weight: bold;
     font-size: 0.8rem;
 }
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 300px;
+    margin: 20px auto;
+}
+
+.auth-form input {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+}
+
+.auth-toggle {
+    cursor: pointer;
+    color: var(--primary-color);
+    text-decoration: underline;
+    font-size: 0.9rem;
+    margin-top: 15px;
+}
+
+.header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
