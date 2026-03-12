@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import axios from 'axios';
+import confetti from 'canvas-confetti';
 import './App.css';
 import {LottoGame, ResultDto} from './types';
 
@@ -22,7 +23,7 @@ const App: React.FC = () => {
 
     const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem('theme') === 'dark');
 
-    const specialCharRegex = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/;
+    const specialCharRegex = /[!@#$%^&*()_+\-=[{};':"\\|,.<>/?]/;
 
     // --- THEME & HISTORY EFFECTS ---
     useEffect(() => {
@@ -134,10 +135,26 @@ const App: React.FC = () => {
             const response = await axios.get<ResultDto>(`http://localhost:8080/results/${ticket.ticketDto.hash}`,
                 {headers: {Authorization: `Bearer ${token}`}}
             );
+
             setGameResult(response.data);
+
+            // CONFETTI LOGIC - Fixed 'hits' typing (casting to array)
+            if (response.data.responseDto) {
+                const hitArray = Array.from(response.data.responseDto.hitNumbers);
+                const hitsCount = hitArray.length;
+
+                if (hitsCount >= 3) {
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#2ecc71', '#f1c40f', '#3498db', '#e74c3c']
+                    });
+                }
+            }
+
         } catch (err: any) {
             if (err.response?.status === 404) {
-                // To trafi do stanu error i wyświetli się pod przyciskiem
                 setError("The draw results are not available yet. Official draws take place every Saturday at 12:00 PM. Please come back after that time!");
             } else {
                 setError("Server error. Please try again later.");
@@ -244,7 +261,6 @@ const App: React.FC = () => {
                 </div>
             </div>
 
-            {/* Ten błąd wyświetla się na górze strony */}
             {error && !ticket && <div className="error-box">{error}</div>}
 
             <div className="grid">
@@ -271,7 +287,6 @@ const App: React.FC = () => {
                         {loading ? 'Checking...' : '2. CHECK IF YOU WON'}
                     </button>
 
-                    {/* KLUCZOWA POPRAWKA: Wyświetlanie błędu bezpośrednio pod przyciskiem sprawdzenia */}
                     {error && (
                         <div className="error-box" style={{ marginTop: '15px', backgroundColor: 'rgba(231, 76, 60, 0.1)' }}>
                             {error}
