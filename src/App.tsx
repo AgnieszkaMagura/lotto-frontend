@@ -104,6 +104,18 @@ const App: React.FC = () => {
 
             <h1>Lotto Full-Stack App</h1>
 
+            {/* --- NEW INSTRUCTION SECTION --- */}
+            <div className="instruction-box">
+                <p>
+                    Welcome to the <strong>Lotto Game</strong>!
+                    Select exactly <strong>6 numbers</strong> from the grid (1-99) and register your ticket.
+                </p>
+                <p className="draw-info">
+                    📅 Next draw: <strong>Every Saturday at 12:00 PM</strong>
+                </p>
+            </div>
+            {/* ------------------------------- */}
+
             {error && !gameResult?.responseDto && (
                 <div className="error-box">{error}</div>
             )}
