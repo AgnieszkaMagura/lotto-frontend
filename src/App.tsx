@@ -42,7 +42,7 @@ const App: React.FC = () => {
     };
 
     // --- AUTH FUNCTIONS ---
-    const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleAuth = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
@@ -138,16 +138,15 @@ const App: React.FC = () => {
 
             setGameResult(response.data);
 
-            // CONFETTI LOGIC - Fixed 'hits' typing (casting to array)
             if (response.data.responseDto) {
-                const hitArray = Array.from(response.data.responseDto.hitNumbers);
-                const hitsCount = hitArray.length;
+                const hitNumbers = response.data.responseDto.hitNumbers as number[];
+                const hitsCount = hitNumbers.length;
 
                 if (hitsCount >= 3) {
                     confetti({
                         particleCount: 150,
                         spread: 70,
-                        origin: { y: 0.6 },
+                        origin: {y: 0.6},
                         colors: ['#2ecc71', '#f1c40f', '#3498db', '#e74c3c']
                     });
                 }
@@ -228,7 +227,6 @@ const App: React.FC = () => {
                 }}>
                     {isRegistering ? 'Already have an account? Log in' : 'New user? Register here'}
                 </p>
-                {/* Footer for Login View */}
                 <footer className="footer">
                     <p>Developed by Agnieszka Magura. All rights reserved.</p>
                 </footer>
@@ -239,7 +237,6 @@ const App: React.FC = () => {
     return (
         <div className="container">
             <div className="header-actions">
-
                 <span>Welcome, <strong>{user}</strong>!</span>
                 <div className="buttons">
                     <button onClick={handleLogout} className="clear-button">Logout</button>
@@ -291,12 +288,14 @@ const App: React.FC = () => {
                     <p><strong>Numbers:</strong> {ticket.ticketDto.numbers.join(', ')}</p>
                     <p><strong>Draw Date:</strong> {new Date(ticket.ticketDto.drawDate).toLocaleString()}</p>
 
-                    <button onClick={checkResult} className="check-button" disabled={loading} style={{ marginTop: '15px' }}>
+                    <button onClick={checkResult} className="check-button" disabled={loading}
+                            style={{marginTop: '15px'}}>
                         {loading ? 'Checking...' : '2. CHECK IF YOU WON'}
                     </button>
 
                     {error && (
-                        <div className="error-box" style={{ marginTop: '15px', backgroundColor: 'rgba(231, 76, 60, 0.1)' }}>
+                        <div className="error-box"
+                             style={{marginTop: '15px', backgroundColor: 'rgba(231, 76, 60, 0.1)'}}>
                             {error}
                         </div>
                     )}
@@ -309,8 +308,8 @@ const App: React.FC = () => {
                     {gameResult.responseDto ? (
                         <div className="details">
                             <p>Your Matches: <strong>
-                                {Array.from(gameResult.responseDto.hitNumbers).length > 0
-                                    ? Array.from(gameResult.responseDto.hitNumbers).join(', ')
+                                {(gameResult.responseDto.hitNumbers as number[]).length > 0
+                                    ? (gameResult.responseDto.hitNumbers as number[]).join(', ')
                                     : "None"}
                             </strong></p>
                             <p>Status: {gameResult.responseDto.isWinner ? "WINNER! 🎉" : "TRY AGAIN 😢"}</p>
@@ -340,7 +339,6 @@ const App: React.FC = () => {
                 }
             </div>
 
-            {/* Footer for Main View */}
             <footer className="footer">
                 <p>Developed by Agnieszka Magura. All rights reserved.</p>
             </footer>
