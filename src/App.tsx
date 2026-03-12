@@ -228,6 +228,10 @@ const App: React.FC = () => {
                 }}>
                     {isRegistering ? 'Already have an account? Log in' : 'New user? Register here'}
                 </p>
+                {/* Footer for Login View */}
+                <footer className="footer">
+                    <p>Developed by Agnieszka Magura. All rights reserved.</p>
+                </footer>
             </div>
         );
     }
@@ -331,6 +335,11 @@ const App: React.FC = () => {
                     ))
                 }
             </div>
+
+            {/* Footer for Main View */}
+            <footer className="footer">
+                <p>Developed by Agnieszka Magura. All rights reserved.</p>
+            </footer>
         </div>
     );
 };
