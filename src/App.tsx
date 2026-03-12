@@ -239,6 +239,7 @@ const App: React.FC = () => {
     return (
         <div className="container">
             <div className="header-actions">
+
                 <span>Welcome, <strong>{user}</strong>!</span>
                 <div className="buttons">
                     <button onClick={handleLogout} className="clear-button">Logout</button>
@@ -285,9 +286,12 @@ const App: React.FC = () => {
             {ticket && (
                 <div className="ticket-box">
                     <h3>Ticket Registered!</h3>
-                    <p>ID: <code>{ticket.ticketDto.hash}</code></p>
-                    <p>Numbers: {ticket.ticketDto.numbers.join(', ')}</p>
-                    <button onClick={checkResult} className="check-button" disabled={loading}>
+                    <p><strong>Status:</strong> {ticket.message}</p>
+                    <p><strong>ID:</strong> <code>{ticket.ticketDto.hash}</code></p>
+                    <p><strong>Numbers:</strong> {ticket.ticketDto.numbers.join(', ')}</p>
+                    <p><strong>Draw Date:</strong> {new Date(ticket.ticketDto.drawDate).toLocaleString()}</p>
+
+                    <button onClick={checkResult} className="check-button" disabled={loading} style={{ marginTop: '15px' }}>
                         {loading ? 'Checking...' : '2. CHECK IF YOU WON'}
                     </button>
 
