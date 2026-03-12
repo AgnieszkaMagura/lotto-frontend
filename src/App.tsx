@@ -37,6 +37,16 @@ const App: React.FC = () => {
         }
     };
 
+    const generateRandomNumbers = () => {
+        const randoms = new Set<number>();
+        while (randoms.size < 6) {
+            randoms.add(Math.floor(Math.random() * 99) + 1);
+        }
+        // Sortujemy, żeby ładnie wyglądało w UI
+        setSelectedNumbers(Array.from(randoms).sort((a, b) => a - b));
+        setError(null);
+    };
+
     const sendTicket = async () => {
         setLoading(true);
         setTicket(null);
@@ -80,6 +90,15 @@ const App: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button onClick={toggleDarkMode} className="theme-toggle">
                     {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+                </button>
+            </div>
+
+            <div className="quick-pick-container">
+                <button onClick={generateRandomNumbers} className="random-button">
+                    🎲 QUICK PICK (Random 6)
+                </button>
+                <button onClick={() => setSelectedNumbers([])} className="clear-button">
+                    🗑️ Clear All
                 </button>
             </div>
 
