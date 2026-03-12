@@ -72,3 +72,32 @@ button {
     font-weight: bold;
 }
 
+.quick-pick-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.random-button {
+    background-color: #007bff !important; /* Niebieski */
+    color: white !important;
+    font-weight: bold;
+    padding: 10px 20px;
+}
+
+.random-button:hover {
+    background-color: #0056b3 !important;
+}
+
+.clear-button {
+    background-color: transparent !important;
+    border: 1px solid var(--border-color);
+    padding: 10px 20px;
+}
+
+.clear-button:hover {
+    background-color: #ff4d4d !important;
+    color: white !important;
+}
+
