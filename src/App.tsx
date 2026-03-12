@@ -1,9 +1,15 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
-import {LottoGame, ResultDto} from './types';
+import { LottoGame, ResultDto } from './types';
 
 const App: React.FC = () => {
+    // --- AUTH STATE ---
+    const [user, setUser] = useState<string | null>(localStorage.getItem('user'));
+    const [authData, setAuthData] = useState({ username: '', password: '' });
+    const [isRegistering, setIsRegistering] = useState(false);
+
+    // --- GAME STATE ---
     const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
     const [ticket, setTicket] = useState<LottoGame | null>(null);
     const [gameResult, setGameResult] = useState<ResultDto | null>(null);
@@ -11,39 +17,75 @@ const App: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [allTickets, setAllTickets] = useState<LottoGame[]>(() => {
         const saved = localStorage.getItem('lotto_history');
-        // Jeśli znaleźliśmy dane, parsujemy je z tekstu na obiekt, jeśli nie - dajemy pustą tablicę
         return saved ? JSON.parse(saved) : [];
     });
 
-    // Inicjalizacja stanu Dark Mode z localStorage
-    const [darkMode, setDarkMode] = useState<boolean>(() => {
-        return localStorage.getItem('theme') === 'dark';
-    });
+    const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem('theme') === 'dark');
 
-    // Efekt zarządzający motywem i zapisem w przeglądarce
+    // --- SHARED REGEX FOR SPECIAL CHARACTERS (including dot, slashes, etc.) ---
+    const specialCharRegex = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?\.]/;
+
+    // --- THEME & HISTORY EFFECTS ---
     useEffect(() => {
-        if (darkMode) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-            localStorage.setItem('theme', 'light');
-        }
+        document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+        localStorage.setItem('theme', darkMode ? 'dark' : 'light');
     }, [darkMode]);
 
     useEffect(() => {
         localStorage.setItem('lotto_history', JSON.stringify(allTickets));
     }, [allTickets]);
 
-    const clearHistory = () => {
-        if (window.confirm("Are you sure you want to delete all tickets?")) {
-            setAllTickets([]);
-            localStorage.removeItem('lotto_history');
+    // --- PASSWORD VALIDATION HELPER ---
+    const isPasswordValid = (password: string) => {
+        // Min 6 chars, 1 uppercase, and 1 special char from our expanded list
+        const passwordRegex = new RegExp(`^(?=.*[A-Z])(?=.*${specialCharRegex.source})(?=.{6,})`);
+        return passwordRegex.test(password);
+    };
+
+    // --- AUTH FUNCTIONS ---
+    const handleAuth = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        if (isRegistering && !isPasswordValid(authData.password)) {
+            setError("Password must be at least 6 characters, include one uppercase letter and one special character.");
+            setLoading(false);
+            return;
+        }
+
+        const endpoint = isRegistering ? '/register' : '/token';
+
+        try {
+            const response = await axios.post(`http://localhost:8080${endpoint}`, {
+                username: authData.username,
+                password: authData.password
+            });
+
+            if (!isRegistering) {
+                const { username, token } = response.data;
+                setUser(username);
+                localStorage.setItem('user', username);
+                localStorage.setItem('token', token);
+            } else {
+                alert(`User ${response.data.username} created! Please log in.`);
+                setIsRegistering(false);
+                setAuthData({ username: '', password: '' });
+            }
+        } catch (err: any) {
+            setError(err.response?.status === 403 ? "Invalid credentials." : "Server error.");
+        } finally {
+            setLoading(false);
         }
     };
 
-    const toggleDarkMode = () => setDarkMode(!darkMode);
+    const handleLogout = () => {
+        setUser(null);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+    };
 
+    // --- GAME FUNCTIONS ---
     const toggleNumber = (num: number) => {
         setError(null);
         if (selectedNumbers.includes(num)) {
@@ -58,7 +100,6 @@ const App: React.FC = () => {
         while (randoms.size < 6) {
             randoms.add(Math.floor(Math.random() * 99) + 1);
         }
-        // Sortujemy, żeby ładnie wyglądało w UI
         setSelectedNumbers(Array.from(randoms).sort((a, b) => a - b));
         setError(null);
     };
@@ -68,10 +109,13 @@ const App: React.FC = () => {
         setTicket(null);
         setGameResult(null);
         setError(null);
+
+        const token = localStorage.getItem('token');
         try {
-            const response = await axios.post<LottoGame>('http://localhost:8080/inputNumbers', {
-                inputNumbers: selectedNumbers
-            });
+            const response = await axios.post<LottoGame>('http://localhost:8080/inputNumbers',
+                { inputNumbers: selectedNumbers },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             setTicket(response.data);
             setAllTickets(prev => [response.data, ...prev]);
         } catch (err) {
@@ -85,92 +129,146 @@ const App: React.FC = () => {
         if (!ticket) return;
         setLoading(true);
         setError(null);
+
+        const token = localStorage.getItem('token');
         try {
-            const response = await axios.get<ResultDto>(`http://localhost:8080/results/${ticket.ticketDto.hash}`);
+            const response = await axios.get<ResultDto>(`http://localhost:8080/results/${ticket.ticketDto.hash}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             setGameResult(response.data);
         } catch (err: any) {
-            if (err.response && err.response.status === 404) {
-                setError("Result is not ready yet (draw happens on Saturday).");
-            } else {
-                setError("A connection or server error occurred.");
-            }
-            console.error(err);
+            setError(err.response?.status === 404 ? "Result is not ready yet." : "Server error.");
         } finally {
             setLoading(false);
         }
     };
 
     const playAgain = () => {
-        setSelectedNumbers([]); // Czyścimy wybrane numery
-        setTicket(null);        // Usuwamy zarejestrowany bilet
-        setGameResult(null);        // Usuwamy wynik losowania
-        setError(null);         // czyścimy ewentualne błędy
+        setSelectedNumbers([]);
+        setTicket(null);
+        setGameResult(null);
+        setError(null);
     };
 
+    const clearHistory = () => {
+        if (window.confirm("Delete all tickets?")) {
+            setAllTickets([]);
+            localStorage.removeItem('lotto_history');
+        }
+    };
 
+    const toggleDarkMode = () => setDarkMode(!darkMode);
+
+    // --- RENDER LOGIN/REGISTER PAGE ---
+    if (!user) {
+        return (
+            <div className="container auth-page">
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <button onClick={toggleDarkMode} className="theme-toggle">{darkMode ? '☀️' : '🌙'}</button>
+                </div>
+                <h1>{isRegistering ? 'Create Account' : 'Login to Play'}</h1>
+                <form onSubmit={handleAuth} className="auth-form">
+                    <input
+                        type="text"
+                        placeholder="Username"
+                        required
+                        value={authData.username}
+                        onChange={(e) => setAuthData({ ...authData, username: e.target.value })}
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        required
+                        value={authData.password}
+                        onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                    />
+
+                    {isRegistering && (
+                        <div className="password-hints">
+                            <p style={{ color: authData.password.length >= 6 ? '#2ecc71' : '#e74c3c' }}>
+                                {authData.password.length >= 6 ? '✓' : '○'} Min. 6 characters
+                            </p>
+                            <p style={{ color: /[A-Z]/.test(authData.password) ? '#2ecc71' : '#e74c3c' }}>
+                                {/[A-Z]/.test(authData.password) ? '✓' : '○'} One uppercase letter
+                            </p>
+                            {/* Updated this part to use the expanded regex for real-time hint coloring */}
+                            <p style={{ color: specialCharRegex.test(authData.password) ? '#2ecc71' : '#e74c3c' }}>
+                                {specialCharRegex.test(authData.password) ? '✓' : '○'} One special character
+                            </p>
+                        </div>
+                    )}
+
+                    <button type="submit" className="play-button" disabled={loading}>
+                        {loading ? 'Processing...' : (isRegistering ? 'Register' : 'Login')}
+                    </button>
+                    {error && <p className="error-box">{error}</p>}
+                </form>
+                <p className="auth-toggle" onClick={() => {
+                    setIsRegistering(!isRegistering);
+                    setError(null);
+                }}>
+                    {isRegistering ? 'Already have an account? Log in' : 'New user? Register here'}
+                </p>
+            </div>
+        );
+    }
+
+    // --- RENDER GAME PAGE ---
     return (
         <div className="container">
-            {/* Przycisk przełączania motywu */}
-            <div style={{display: 'flex', justifyContent: 'flex-end'}}>
-                <button onClick={toggleDarkMode} className="theme-toggle">
-                    {darkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
-                </button>
+            <div className="header-actions">
+                <span>Welcome, <strong>{user}</strong>!</span>
+                <div className="buttons">
+                    <button onClick={handleLogout} className="clear-button">Logout</button>
+                    <button onClick={toggleDarkMode} className="theme-toggle">{darkMode ? '☀️' : '🌙'}</button>
+                </div>
             </div>
 
             <div className="quick-pick-container">
-                <button onClick={generateRandomNumbers} className="random-button">
-                    🎲 QUICK PICK (Random 6)
-                </button>
-                <button onClick={() => setSelectedNumbers([])} className="clear-button">
-                    🗑️ Clear All
-                </button>
+                <button onClick={generateRandomNumbers} className="random-button">🎲 QUICK PICK (Random 6)</button>
+                <button onClick={() => setSelectedNumbers([])} className="clear-button">🗑️ Clear All</button>
             </div>
 
-            <h1>Lotto Full-Stack App</h1>
+            <h1>Lotto Game</h1>
 
-            {/* --- NEW INSTRUCTION SECTION --- */}
             <div className="instruction-box">
+                <h2>How to Play</h2>
                 <p>
-                    Welcome to the <strong>Lotto Game</strong>!
-                    Select exactly <strong>6 numbers</strong> from the grid (1-99) and register your ticket.
+                    Welcome to the <strong>Lotto Full-Stack Experience</strong>! To participate, please select exactly
+                    <strong> 6 unique numbers</strong> from the interactive grid below (1-99).
                 </p>
-                <p className="draw-info">
-                    📅 Next draw: <strong>Every Saturday at 12:00 PM</strong>
+                <p>
+                    Short on time? Use the <strong>"🎲 QUICK PICK"</strong> button to instantly generate a set of
+                    random lucky numbers! Once you're ready, click <strong>"Register Ticket"</strong> to secure your entry.
                 </p>
+                <div className="draw-status-pill">
+                    <span className="calendar-icon">📅</span>
+                    <span>Next Official Draw: <strong>Every Saturday at 12:00 PM</strong></span>
+                </div>
             </div>
-            {/* ------------------------------- */}
 
-            {error && !gameResult?.responseDto && (
-                <div className="error-box">{error}</div>
-            )}
+            {error && <div className="error-box">{error}</div>}
 
             <div className="grid">
-                {Array.from({length: 99}, (_, i) => i + 1).map(num => (
-                    <button
-                        key={num}
-                        onClick={() => toggleNumber(num)}
-                        className={selectedNumbers.includes(num) ? 'selected' : ''}
-                    >
+                {Array.from({ length: 99 }, (_, i) => i + 1).map(num => (
+                    <button key={num} onClick={() => toggleNumber(num)}
+                            className={selectedNumbers.includes(num) ? 'selected' : ''}>
                         {num}
                     </button>
                 ))}
             </div>
 
             <div className="controls">
-                <button
-                    onClick={sendTicket}
-                    disabled={selectedNumbers.length !== 6 || loading}
-                    className="play-button"
-                >
+                <button onClick={sendTicket} disabled={selectedNumbers.length !== 6 || loading} className="play-button">
                     {loading ? 'Processing...' : '1. REGISTER TICKET'}
                 </button>
             </div>
 
             {ticket && (
                 <div className="ticket-box">
-                    <h3>Ticket Registered Successfully!</h3>
-                    <p>Your ID: <code>{ticket.ticketDto.hash}</code></p>
-                    <p>Your Numbers: {ticket.ticketDto.numbers.join(', ')}</p>
+                    <h3>Ticket Registered!</h3>
+                    <p>ID: <code>{ticket.ticketDto.hash}</code></p>
+                    <p>Numbers: {ticket.ticketDto.numbers.join(', ')}</p>
                     <button onClick={checkResult} className="check-button">2. CHECK IF YOU WON</button>
                 </div>
             )}
@@ -188,35 +286,25 @@ const App: React.FC = () => {
                             <p>Status: {gameResult.responseDto.isWinner ? "WINNER! 🎉" : "TRY AGAIN 😢"}</p>
                         </div>
                     ) : (
-                        <div className="info-wait">
-                            <p>Draw Date: {ticket?.ticketDto.drawDate}</p>
-                        </div>
+                        <p>Draw Date: {ticket?.ticketDto.drawDate}</p>
                     )}
-
-                    {/* Przycisk resetu gry - teraz bezpiecznie wewnątrz bloku gameResult */}
-                    <button onClick={playAgain} className="play-again-button">
-                        🔄 Buy Another Ticket
-                    </button>
+                    <button onClick={playAgain} className="play-again-button">🔄 Buy Another Ticket</button>
                 </div>
             )}
+
             <div className="history-container">
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <h2>Your Purchase History</h2>
-                    {allTickets.length > 0 && (
-                        <button onClick={clearHistory} className="clear-history-btn">🗑️ Clear</button>
-                    )}
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <h2>Purchase History</h2>
+                    {allTickets.length > 0 && <button onClick={clearHistory} className="clear-history-btn">🗑️ Clear</button>}
                 </div>
-                {allTickets.length === 0 ? (
-                    <p>No tickets purchased yet.</p>
-                ) : (
-                    allTickets.map((t, index) => (
+                {allTickets.length === 0 ? <p>No tickets yet.</p> :
+                    allTickets.map((t, idx) => (
                         <div key={t.ticketDto.hash} className="history-item">
-                            <span>#{allTickets.length - index}</span>
+                            <span>#{allTickets.length - idx}</span>
                             <p>Numbers: <strong>{t.ticketDto.numbers.join(', ')}</strong></p>
-                            <small>ID: {t.ticketDto.hash}</small>
                         </div>
                     ))
-                )}
+                }
             </div>
         </div>
     );
