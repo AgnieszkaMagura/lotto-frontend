@@ -86,6 +86,7 @@ const App: React.FC = () => {
 
             if (!isRegistering) {
                 const {username, token} = response.data;
+                setAllTickets([]);
                 setUser(username);
                 localStorage.setItem('user', username);
                 localStorage.setItem('token', token);
@@ -118,6 +119,7 @@ const App: React.FC = () => {
 
     const handleLogout = () => {
         setUser(null);
+        setAllTickets([]);
         localStorage.removeItem('user');
         localStorage.removeItem('token');
     };
@@ -176,9 +178,8 @@ const App: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // --- DODAJ TE DWIE LINIE TUTAJ ---
-        setSearchHash(''); // To wyczyści okienko (input) natychmiast
-        setTicket(null);   // To usunie boks "Ticket Registered!" z ekranu
+        setSearchHash('');
+        setTicket(null);
         // ---------------------------------
 
         const token = localStorage.getItem('token');
@@ -197,8 +198,6 @@ const App: React.FC = () => {
                 });
             }
         } catch (err: any) {
-            // Jeśli wystąpi błąd, opcjonalnie możesz przywrócić wpisany hash,
-            // ale zazwyczaj lepiej zostawić czyste pole
             setError(err.response?.status === 404 ? "Ticket not found or results not ready." : "Server error.");
         } finally {
             setLoading(false);
