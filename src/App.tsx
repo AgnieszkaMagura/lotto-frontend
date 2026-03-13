@@ -9,7 +9,7 @@ const App: React.FC = () => {
     const [user, setUser] = useState<string | null>(localStorage.getItem('user'));
     const [authData, setAuthData] = useState({username: '', password: ''});
     const [isRegistering, setIsRegistering] = useState(false);
-    const [showPassword, setShowPassword] = useState(false); // NOWY STAN
+    const [showPassword, setShowPassword] = useState(false);
 
     // --- GAME STATE ---
     const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
@@ -18,23 +18,33 @@ const App: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
-    const [allTickets, setAllTickets] = useState<LottoGame[]>(() => {
-        const saved = localStorage.getItem('lotto_history');
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [allTickets, setAllTickets] = useState<LottoGame[]>([]);
     const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem('theme') === 'dark');
-    const specialCharRegex = /[!@#$%^&*()_+\-=[{};':"\\|,.<>/?]/;
     const [searchHash, setSearchHash] = useState<string>('');
+    const specialCharRegex = /[!@#$%^&*()_+\-=[{};':"\\|,.<>/?]/;
 
-    // --- THEME & HISTORY EFFECTS ---
+    // --- THEME EFFECT ---
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
         localStorage.setItem('theme', darkMode ? 'dark' : 'light');
     }, [darkMode]);
 
+    // --- DYNAMIC HISTORY LOADING ---
     useEffect(() => {
-        localStorage.setItem('lotto_history', JSON.stringify(allTickets));
-    }, [allTickets]);
+        if (user) {
+            const saved = localStorage.getItem(`lotto_history_${user}`);
+            setAllTickets(saved ? JSON.parse(saved) : []);
+        } else {
+            setAllTickets([]);
+        }
+    }, [user]);
+
+    // --- DYNAMIC HISTORY SAVING ---
+    useEffect(() => {
+        if (user) {
+            localStorage.setItem(`lotto_history_${user}`, JSON.stringify(allTickets));
+        }
+    }, [allTickets, user]);
 
     // --- HELPERS ---
     const copyToClipboard = (text: string) => {
@@ -44,12 +54,7 @@ const App: React.FC = () => {
         });
     };
 
-    const isPasswordValid = (password: string) => {
-        const passwordRegex = new RegExp(`^(?=.*[A-Z])(?=.*${specialCharRegex.source})(?=.{6,})`);
-        return passwordRegex.test(password);
-    };
-
-    // --- AUTH FUNCTIONS ---
+    // --- AUTH FUNCTIONS WITH VALIDATION ---
     const handleAuth = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -65,7 +70,7 @@ const App: React.FC = () => {
                 return;
             }
             if (!passwordRegex.test(authData.password)) {
-                setError("Password must be at least 6 characters, include one uppercase letter and one special character.");
+                setError("Password is too simple! See requirements below.");
                 setLoading(false);
                 return;
             }
@@ -80,34 +85,28 @@ const App: React.FC = () => {
             });
 
             if (!isRegistering) {
-                const { username, token } = response.data;
+                const {username, token} = response.data;
                 setUser(username);
                 localStorage.setItem('user', username);
                 localStorage.setItem('token', token);
             } else {
                 alert(`User ${response.data.username} created! Please log in.`);
                 setIsRegistering(false);
-                setAuthData({ username: '', password: '' });
+                setAuthData({username: '', password: ''});
                 setShowPassword(false);
             }
         } catch (err: any) {
-            // TUTAJ JEST TWOJA OBSŁUGA BŁĘDÓW
             if (axios.isAxiosError(err)) {
                 if (err.response) {
-                    // Serwer odpowiedział kodem błędu (np. 409, 403)
                     if (isRegistering && err.response.status === 409) {
                         setError("This username is already taken. Please choose another one.");
                     } else if (!isRegistering && (err.response.status === 403 || err.response.status === 401)) {
                         setError("Invalid username or password.");
                     } else {
-                        // Jeśli serwer wysłał inny błąd (np. 400), pokaż komunikat z backendu
                         setError(err.response.data.message || "An error occurred on the server.");
                     }
-                } else if (err.request) {
-                    // Żądanie zostało wysłane, ale nie ma odpowiedzi (często problem z CORS lub wyłączony serwer)
-                    setError("No response from server. Check your connection or CORS settings.");
                 } else {
-                    setError("Error setting up the request.");
+                    setError("No response from server. Check your connection.");
                 }
             } else {
                 setError("An unexpected error occurred.");
@@ -156,9 +155,6 @@ const App: React.FC = () => {
             );
             setTicket(response.data);
             setAllTickets(prev => [response.data, ...prev]);
-
-            // AUTO-UZUPEŁNIANIE ID W PANELU SPRAWDZANIA
-            setSearchHash(response.data.ticketDto.hash);
         } catch (err) {
             setError("Error while sending the ticket.");
         } finally {
@@ -167,41 +163,37 @@ const App: React.FC = () => {
     };
 
     const checkResult = async () => {
-        if (!searchHash.trim()) {
+        let cleanHash = searchHash.trim();
+        if (cleanHash.toUpperCase().startsWith("ID:")) {
+            cleanHash = cleanHash.replace(/ID:/i, "").trim();
+        }
+        if (!cleanHash) {
             setError("Please enter a Ticket ID first.");
             return;
         }
 
         setLoading(true);
         setError(null);
-        setGameResult(null);
-
         const token = localStorage.getItem('token');
+
         try {
-            const response = await axios.get<ResultDto>(`http://localhost:8080/results/${searchHash.trim()}`,
-                { headers: { Authorization: `Bearer ${token}` } }
+            const response = await axios.get<ResultDto>(`http://localhost:8080/results/${cleanHash}`,
+                {headers: {Authorization: `Bearer ${token}`}}
             );
 
             setGameResult(response.data);
+            setSearchHash('');
 
-            // Efekt konfetti przy wygranej (3 lub więcej trafienia)
-            if (response.data.responseDto) {
-                const hitNumbers = response.data.responseDto.hitNumbers as number[];
-                if (hitNumbers.length >= 3) {
-                    confetti({
-                        particleCount: 150,
-                        spread: 70,
-                        origin: { y: 0.6 },
-                        colors: ['#2ecc71', '#f1c40f', '#3498db', '#e74c3c']
-                    });
-                }
+            if (response.data.responseDto && (response.data.responseDto.hitNumbers as number[]).length >= 3) {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: {y: 0.6},
+                    colors: ['#2ecc71', '#f1c40f', '#3498db', '#e74c3c']
+                });
             }
         } catch (err: any) {
-            if (err.response?.status === 404) {
-                setError("Ticket not found or results not available yet. Draw date: Saturday 12:00 PM.");
-            } else {
-                setError("Server error. Please try again later.");
-            }
+            setError(err.response?.status === 404 ? "Ticket not found or results not ready." : "Server error.");
         } finally {
             setLoading(false);
         }
@@ -215,9 +207,9 @@ const App: React.FC = () => {
     };
 
     const clearHistory = () => {
-        if (window.confirm("Delete all tickets?")) {
+        if (window.confirm("Delete all tickets for this user?")) {
             setAllTickets([]);
-            localStorage.removeItem('lotto_history');
+            if (user) localStorage.removeItem(`lotto_history_${user}`);
         }
     };
 
@@ -226,51 +218,39 @@ const App: React.FC = () => {
     if (!user) {
         return (
             <div className="container auth-page">
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{display: 'flex', justifyContent: 'flex-end'}}>
                     <button onClick={toggleDarkMode} className="theme-toggle">{darkMode ? '☀️' : '🌙'}</button>
                 </div>
                 <h1>{isRegistering ? 'Create Account' : 'Login to Play'}</h1>
-
-                <form onSubmit={handleAuth} className="auth-form" style={{ maxWidth: '400px', margin: '0 auto' }}>
-                    <div className="input-group" style={{ marginBottom: '15px' }}>
-                        <input
-                            type="text"
-                            placeholder="Username"
-                            required
-                            style={{ width: '100%', boxSizing: 'border-box' }}
-                            value={authData.username}
-                            onChange={(e) => setAuthData({ ...authData, username: e.target.value })}
-                        />
-                    </div>
-
-                    <div className="password-input-wrapper" style={{ position: 'relative', width: '100%', marginBottom: '15px' }}>
+                <form onSubmit={handleAuth} className="auth-form" style={{maxWidth: '400px', margin: '0 auto'}}>
+                    <input
+                        type="text"
+                        placeholder="Username"
+                        required
+                        value={authData.username}
+                        onChange={(e) => setAuthData({...authData, username: e.target.value})}
+                    />
+                    <div className="password-input-wrapper"
+                         style={{position: 'relative', width: '100%', margin: '15px 0'}}>
                         <input
                             type={showPassword ? "text" : "password"}
                             placeholder="Password"
                             required
-                            style={{
-                                width: '100%',
-                                paddingRight: '45px', // Miejsce na ikonkę
-                                boxSizing: 'border-box'
-                            }}
+                            style={{width: '100%', boxSizing: 'border-box'}}
                             value={authData.password}
-                            onChange={(e) => setAuthData({ ...authData, password: e.target.value })}
+                            onChange={(e) => setAuthData({...authData, password: e.target.value})}
                         />
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             style={{
                                 position: 'absolute',
-                                right: '5px',
+                                right: '10px',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
                                 background: 'none',
                                 border: 'none',
                                 cursor: 'pointer',
-                                fontSize: '1.2rem',
-                                padding: '5px',
-                                display: 'flex',
-                                alignItems: 'center',
                                 color: 'var(--text-color)'
                             }}
                         >
@@ -279,38 +259,37 @@ const App: React.FC = () => {
                     </div>
 
                     {isRegistering && (
-                        <div className="password-hints" style={{ textAlign: 'left', fontSize: '0.9rem', marginBottom: '15px' }}>
-                            <p style={{ color: authData.password.length >= 6 ? '#2ecc71' : '#e74c3c', margin: '5px 0' }}>
+                        <div className="password-hints"
+                             style={{textAlign: 'left', fontSize: '0.85rem', marginBottom: '15px'}}>
+                            <p style={{color: authData.password.length >= 6 ? '#2ecc71' : '#e74c3c', margin: '4px 0'}}>
                                 {authData.password.length >= 6 ? '✓' : '○'} Min. 6 characters
                             </p>
-                            <p style={{ color: /[A-Z]/.test(authData.password) ? '#2ecc71' : '#e74c3c', margin: '5px 0' }}>
+                            <p style={{
+                                color: /[A-Z]/.test(authData.password) ? '#2ecc71' : '#e74c3c',
+                                margin: '4px 0'
+                            }}>
                                 {/[A-Z]/.test(authData.password) ? '✓' : '○'} One uppercase letter
                             </p>
-                            <p style={{ color: specialCharRegex.test(authData.password) ? '#2ecc71' : '#e74c3c', margin: '5px 0' }}>
+                            <p style={{
+                                color: specialCharRegex.test(authData.password) ? '#2ecc71' : '#e74c3c',
+                                margin: '4px 0'
+                            }}>
                                 {specialCharRegex.test(authData.password) ? '✓' : '○'} One special character
                             </p>
                         </div>
                     )}
 
-                    <button type="submit" className="play-button" disabled={loading} style={{ width: '100%' }}>
+                    <button type="submit" className="play-button" disabled={loading} style={{width: '100%'}}>
                         {loading ? 'Processing...' : (isRegistering ? 'Register' : 'Login')}
                     </button>
-
-                    {error && <p className="error-box" style={{ marginTop: '15px' }}>{error}</p>}
+                    {error && <p className="error-box" style={{marginTop: '15px'}}>{error}</p>}
                 </form>
-
-                <p className="auth-toggle"
-                   style={{ cursor: 'pointer', marginTop: '20px', textDecoration: 'underline' }}
-                   onClick={() => {
-                       setIsRegistering(!isRegistering);
-                       setError(null);
-                       setShowPassword(false);
-                   }}>
+                <p className="auth-toggle" style={{cursor: 'pointer', marginTop: '20px'}} onClick={() => {
+                    setIsRegistering(!isRegistering);
+                    setError(null);
+                }}>
                     {isRegistering ? 'Already have an account? Log in' : 'New user? Register here'}
                 </p>
-                <footer className="footer">
-                    <p>Developed by Agnieszka Magura. All rights reserved.</p>
-                </footer>
             </div>
         );
     }
@@ -334,17 +313,16 @@ const App: React.FC = () => {
 
             <div className="instruction-box">
                 <h2>How to Play</h2>
-                <p>
-                    Welcome to the <strong>Lotto Full-Stack Experience</strong>! To participate, please select exactly
-                    <strong> 6 unique numbers</strong> from the interactive grid below (1-99).
-                </p>
+                <div className="steps-guide">
+                    <p>1. Select <strong>6 unique numbers</strong> (1-99) from the grid below.</p>
+                    <p>2. Click the <strong>"1. REGISTER TICKET"</strong> button to enter the draw.</p>
+                    <p>3. Check your results using the generated <strong>Ticket ID</strong>.</p>
+                </div>
                 <div className="draw-status-pill">
                     <span className="calendar-icon">📅</span>
                     <span>Next Official Draw: <strong>Every Saturday at 12:00 PM</strong></span>
                 </div>
             </div>
-
-            {error && !ticket && <div className="error-box">{error}</div>}
 
             <div className="grid">
                 {Array.from({length: 99}, (_, i) => i + 1).map(num => (
@@ -355,18 +333,30 @@ const App: React.FC = () => {
                 ))}
             </div>
 
-            <div className="controls">
-                <button onClick={sendTicket} disabled={selectedNumbers.length !== 6 || loading} className="play-button">
-                    {loading ? 'Processing...' : '1. REGISTER TICKET'}
+            <div className="controls" style={{textAlign: 'center', margin: '30px 0'}}>
+                <button
+                    onClick={sendTicket}
+                    disabled={selectedNumbers.length !== 6 || loading}
+                    className={`play-button ${selectedNumbers.length === 6 ? 'pulse-animation' : ''}`}
+                    style={{
+                        padding: '20px 40px',
+                        fontSize: '1.4rem',
+                        backgroundColor: selectedNumbers.length === 6 ? '#2ecc71' : '#ccc',
+                        cursor: selectedNumbers.length === 6 ? 'pointer' : 'not-allowed',
+                        boxShadow: selectedNumbers.length === 6 ? '0 10px 20px rgba(46, 204, 113, 0.3)' : 'none',
+                        transition: 'all 0.3s ease',
+                        border: selectedNumbers.length === 6 ? '2px solid white' : 'none',
+                        color: 'white',
+                        borderRadius: '12px'
+                    }}
+                >
+                    {loading ? 'Processing...' : '🚀 1. REGISTER TICKET'}
                 </button>
             </div>
 
             {ticket && (
                 <div className="ticket-box">
                     <h3>Ticket Registered!</h3>
-                    <p><strong>Status:</strong> {ticket.message}</p>
-
-                    {/* Sekcja z ID i kopiowaniem - teraz to główny element tego boxa */}
                     <div style={{
                         backgroundColor: 'var(--bg-color)',
                         padding: '10px',
@@ -377,123 +367,99 @@ const App: React.FC = () => {
                         alignItems: 'center',
                         border: '1px solid var(--border-color)'
                     }}>
-                        <p style={{ margin: 0 }}><strong>ID:</strong> <code>{ticket.ticketDto.hash}</code></p>
-                        <button
-                            onClick={() => copyToClipboard(ticket.ticketDto.hash)}
-                            className="copy-btn-small"
-                            style={{
-                                padding: '5px 10px',
-                                fontSize: '0.75rem',
-                                backgroundColor: copiedId === ticket.ticketDto.hash ? '#2ecc71' : 'var(--secondary-color)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                            }}
-                        >
+                        <p style={{margin: 0}}><strong>ID:</strong> <code>{ticket.ticketDto.hash}</code></p>
+                        <button onClick={() => copyToClipboard(ticket.ticketDto.hash)} className="copy-btn-small">
                             {copiedId === ticket.ticketDto.hash ? '✅ Copied!' : '📋 Copy ID'}
                         </button>
                     </div>
-
-                    <p><strong>Numbers:</strong> {ticket.ticketDto.numbers.join(', ')}</p>
-                    <p><strong>Draw Date:</strong> {new Date(ticket.ticketDto.drawDate).toLocaleString()}</p>
-
-                    {/* PRZYCISK "CHECK IF YOU WON" ZOSTAŁ STĄD USUNIĘTY */}
                 </div>
             )}
 
-            {/* --- UNIWERSALNY PANEL SPRAWDZANIA --- */}
-            <div className="search-section" style={{
-                marginTop: '30px',
-                padding: '20px',
-                backgroundColor: 'var(--card-bg)',
-                borderRadius: '12px',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-            }}>
+            <div className="search-section" style={{ marginTop: '30px', padding: '20px', backgroundColor: 'var(--card-bg)', borderRadius: '12px' }}>
                 <h3>Check Your Results</h3>
-                <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <input
                         type="text"
-                        placeholder="Enter Ticket ID (hash)..."
+                        placeholder="Enter Ticket ID..."
                         value={searchHash}
                         onChange={(e) => setSearchHash(e.target.value)}
                         style={{
                             flex: 1,
-                            padding: '12px',
+                            padding: '15px',
                             borderRadius: '8px',
                             border: '1px solid var(--border-color)',
-                            backgroundColor: 'var(--bg-color)',
-                            color: 'var(--text-color)'
+                            background: 'var(--bg-color)',
+                            color: 'var(--text-color)',
+                            fontSize: '1rem'
                         }}
                     />
                     <button
                         onClick={checkResult}
-                        className="check-button"
-                        disabled={loading || !searchHash}
-                        style={{ margin: 0, minWidth: '120px' }}
+                        disabled={loading || !searchHash.trim()}
+                        className={`check-button ${searchHash.trim() && !loading ? 'pulse-animation' : ''}`}
+                        style={{
+                            padding: '15px 30px',
+                            fontSize: '1rem',
+                            fontWeight: 'bold',
+                            backgroundColor: searchHash.trim() && !loading ? '#2ecc71' : '#ccc',
+                            color: 'white',
+                            border: '2px solid white',
+                            borderRadius: '8px',
+                            cursor: searchHash.trim() && !loading ? 'pointer' : 'not-allowed',
+                            boxShadow: searchHash.trim() && !loading ? '0 4px 15px rgba(46, 204, 113, 0.3)' : 'none',
+                            transition: 'all 0.3s ease',
+                            textTransform: 'uppercase'
+                        }}
                     >
-                        {loading ? 'Checking...' : 'Check Ticket'}
+                        {loading ? '...' : '🔍 Check Ticket'}
                     </button>
                 </div>
             </div>
 
             {gameResult && (
                 <div className="result-box">
-                    {/* Jeśli wiadomość z backendu sugeruje, że losowanie jeszcze się nie odbyło */}
                     {gameResult.message === "Results are being calculated, please come back later" ? (
-                        <div className="not-ready-info" style={{ textAlign: 'center', padding: '10px' }}>
-                            <h3 style={{ color: '#f1c40f' }}>⏳ Draw not yet held</h3>
+                        <div className="not-ready-info" style={{textAlign: 'center', padding: '10px'}}>
+                            <h3 style={{color: '#f1c40f'}}>⏳ Results not available yet</h3>
                             <p>The official draw takes place <strong>every Saturday at 12:00 PM</strong>.</p>
-                            <p>Please come back later to check your winnings!</p>
+                            <p>Please come back later to check your ticket. <strong>See you soon!</strong></p>
                         </div>
                     ) : (
                         <>
-                            {/* Widok, gdy wyniki są już gotowe */}
                             <h3>{gameResult.message}</h3>
                             {gameResult.responseDto && (
                                 <div className="details">
                                     <p>Your Matches: <strong>
-                                        {gameResult.responseDto.hitNumbers && (gameResult.responseDto.hitNumbers as number[]).length > 0
-                                            ? (gameResult.responseDto.hitNumbers as number[]).join(', ')
-                                            : "None"}
+                                        {(gameResult.responseDto.hitNumbers as number[]).join(', ') || "None"}
                                     </strong></p>
                                     <p>Status: {gameResult.responseDto.isWinner ? "WINNER! 🎉" : "TRY AGAIN 😢"}</p>
                                 </div>
                             )}
                         </>
                     )}
-
-                    <button onClick={playAgain} className="play-again-button" style={{ marginTop: '20px' }}>
+                    <button onClick={playAgain} className="play-again-button" style={{marginTop: '20px'}}>
                         🔄 Buy Another Ticket
                     </button>
                 </div>
             )}
 
             <div className="history-container">
-                <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                    <h2>Purchase History</h2>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <h2>Purchase History ({user})</h2>
                     {allTickets.length > 0 &&
                         <button onClick={clearHistory} className="clear-history-btn">🗑️ Clear</button>}
                 </div>
                 {allTickets.length === 0 ? <p>No tickets yet.</p> :
                     allTickets.map((t, idx) => (
                         <div key={t.ticketDto.hash} className="history-item">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                                 <div>
                                     <span>#{allTickets.length - idx}</span>
                                     <p>Numbers: <strong>{t.ticketDto.numbers.join(', ')}</strong></p>
-                                    <p style={{ fontSize: '0.85rem', color: '#888', marginTop: '4px' }}>
-                                        ID: <code style={{ cursor: 'pointer' }} onClick={() => copyToClipboard(t.ticketDto.hash)}>
-                                        {t.ticketDto.hash}
-                                    </code>
-                                    </p>
+                                    <p style={{fontSize: '0.8rem', color: '#888'}}>ID: {t.ticketDto.hash}</p>
                                 </div>
-                                <button
-                                    className="copy-btn-small"
-                                    onClick={() => copyToClipboard(t.ticketDto.hash)}
-                                    style={{ padding: '4px 8px', fontSize: '0.8rem' }}
-                                >
-                                    {copiedId === t.ticketDto.hash ? '✅ Copied' : '📋 Copy ID'}
+                                <button onClick={() => copyToClipboard(t.ticketDto.hash)} className="copy-btn-small">
+                                    {copiedId === t.ticketDto.hash ? '✅' : '📋'}
                                 </button>
                             </div>
                         </div>
