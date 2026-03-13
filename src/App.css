@@ -210,3 +210,12 @@ button.selected {
     font-size: 0.9rem;
     color: var(--text-muted);
 }
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+.pulse-animation {
+    animation: pulse 1.5s infinite ease-in-out;
+}
