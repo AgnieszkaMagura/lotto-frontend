@@ -1,46 +1,74 @@
-# Getting Started with Create React App
+# 🎰 Lotto Game - Fullstack Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, fullstack lottery simulator built with **React** and **Spring Boot**. The application allows users to register, select lucky numbers, and check their winnings based on scheduled draws.
 
-## Available Scripts
+## 🚀 Project Overview
+This repository contains the **Frontend** web application. To function correctly, it must communicate with the backend service.
 
-In the project directory, you can run:
+* **Backend Repository:** [https://github.com/AgnieszkaMagura/Lotto.git](https://github.com/AgnieszkaMagura/Lotto.git)
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## 🛠️ Infrastructure & Requirements
+Before running the application, ensure you have the following installed and running:
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+1.  **Node.js** (for the frontend)
+2.  **Docker Desktop** (to run the database and cache)
+3.  **Java 17+** (to run the backend)
 
-### `npm test`
+### Backend Dependencies:
+The system relies on these services (managed via Docker):
+* **MongoDB:** Stores user accounts and registered tickets.
+* **Redis:** Handles result caching and session management.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## 🚦 Getting Started
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 1. Start Infrastructure
+Navigate to your backend project directory and start the Docker containers:
+```bash
+docker-compose up -d
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Verify that MongoDB (port 27017) and Redis (port 6379) are up and running.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 2. Launch the Backend
+Run the Spring Boot application through your IDE (e.g., IntelliJ) or via terminal:
+```bash
+./mvnw spring-boot:run
+```
+### 3. Launch the frontend
+In this project directory, run the following commands:
+```bash
+npm install
+npm start
+```
+The application will automatically open at http://localhost:3000.
 
-### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## 💡 Key Features
+* **Secure Auth:** JWT-based login and registration system.
+* **Interactive UI:** Dynamic 1-99 number selection grid with "Quick Pick" feature.
+* **Dark Mode:** Full support for light and dark themes with system persistence.
+* **History Tracking:** Ticket purchase history saved per user in `localStorage`.
+* **Real-time Results:** Automated winning checks with confetti animations for winners! 🎉
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 📅 Draw Schedule
+* **Official Draws:** Every Saturday at 12:00 PM.
+* **Verification:** You can check your ticket immediately after the draw is completed.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+## ❓ Troubleshooting
+* **Connection Error:** If you see "No response from server", ensure the backend is running on `http://localhost:8080`.
+* **Empty History:** History is tied to the specific username and stored in your browser's local storage.
+* **Docker Issues:** If the backend fails to start, run `docker ps` to check if MongoDB and Redis containers are active.
+---
+<p align="center">
+  Developed with ❤️ by <strong>Agnieszka Magura</strong><br>
+  <a href="https://github.com/AgnieszkaMagura" target="_blank">
+    <img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+  </a>
+  <a href="https://www.linkedin.com/in/agnieszka-magura-0714241a8/" target="_blank">
+    <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
+  </a>
+</p>
