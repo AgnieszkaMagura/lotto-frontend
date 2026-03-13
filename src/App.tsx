@@ -167,6 +167,7 @@ const App: React.FC = () => {
         if (cleanHash.toUpperCase().startsWith("ID:")) {
             cleanHash = cleanHash.replace(/ID:/i, "").trim();
         }
+
         if (!cleanHash) {
             setError("Please enter a Ticket ID first.");
             return;
@@ -174,15 +175,18 @@ const App: React.FC = () => {
 
         setLoading(true);
         setError(null);
-        const token = localStorage.getItem('token');
 
+        // --- DODAJ TE DWIE LINIE TUTAJ ---
+        setSearchHash(''); // To wyczyści okienko (input) natychmiast
+        setTicket(null);   // To usunie boks "Ticket Registered!" z ekranu
+        // ---------------------------------
+
+        const token = localStorage.getItem('token');
         try {
             const response = await axios.get<ResultDto>(`http://localhost:8080/results/${cleanHash}`,
                 {headers: {Authorization: `Bearer ${token}`}}
             );
-
             setGameResult(response.data);
-            setSearchHash('');
 
             if (response.data.responseDto && (response.data.responseDto.hitNumbers as number[]).length >= 3) {
                 confetti({
@@ -193,6 +197,8 @@ const App: React.FC = () => {
                 });
             }
         } catch (err: any) {
+            // Jeśli wystąpi błąd, opcjonalnie możesz przywrócić wpisany hash,
+            // ale zazwyczaj lepiej zostawić czyste pole
             setError(err.response?.status === 404 ? "Ticket not found or results not ready." : "Server error.");
         } finally {
             setLoading(false);
@@ -314,8 +320,8 @@ const App: React.FC = () => {
             <div className="instruction-box">
                 <h2>How to Play</h2>
                 <div className="steps-guide">
-                    <p>1. Select <strong>6 unique numbers</strong> (1-99) from the grid below.</p>
-                    <p>2. Click the <strong>"1. REGISTER TICKET"</strong> button to enter the draw.</p>
+                    <p>1. Select your <strong>6 lucky and unique numbers</strong> (1-99) from the grid below or just fill the fields randomly.</p>
+                    <p>2. Click the <strong>"REGISTER TICKET"</strong> button to enter the draw.</p>
                     <p>3. Check your results using the generated <strong>Ticket ID</strong>.</p>
                 </div>
                 <div className="draw-status-pill">
@@ -350,7 +356,7 @@ const App: React.FC = () => {
                         borderRadius: '12px'
                     }}
                 >
-                    {loading ? 'Processing...' : '🚀 1. REGISTER TICKET'}
+                    {loading ? 'Processing...' : '🚀 REGISTER TICKET'}
                 </button>
             </div>
 
