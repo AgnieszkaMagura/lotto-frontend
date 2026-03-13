@@ -4,17 +4,6 @@ import confetti from 'canvas-confetti';
 import './App.css';
 import {LottoGame, ResultDto} from './types';
 
-const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('pl-PL', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
-
 const App: React.FC = () => {
     // --- AUTH STATE ---
     const [user, setUser] = useState<string | null>(localStorage.getItem('user'));
@@ -442,7 +431,8 @@ const App: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            <h3>{gameResult.message}</h3>
+                            {!gameResult.message.includes("come back later") && <h3>{gameResult.message}</h3>}
+
                             {gameResult.responseDto && (
                                 <div className="details">
                                     <p>Your Matches: <strong>
@@ -466,48 +456,20 @@ const App: React.FC = () => {
                         <button onClick={clearHistory} className="clear-history-btn">🗑️ Clear</button>}
                 </div>
                 {allTickets.length === 0 ? <p>No tickets yet.</p> :
-                    allTickets.map((t, idx) => {
-                        const isPending = new Date(t.ticketDto.drawDate) > new Date();
-
-                        return (
-                            <div key={t.ticketDto.hash} className="history-item" style={{
-                                borderLeft: isPending ? '4px solid #f1c40f' : '4px solid #2ecc71',
-                                padding: '15px',
-                                marginBottom: '10px',
-                                borderRadius: '8px',
-                                backgroundColor: 'var(--card-bg)'
-                            }}>
-                                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                                            <span style={{ fontWeight: 'bold' }}>#{allTickets.length - idx}</span>
-                                            <span style={{
-                                                fontSize: '0.7rem',
-                                                padding: '2px 8px',
-                                                borderRadius: '10px',
-                                                backgroundColor: isPending ? '#f39c1222' : '#2ecc7122',
-                                                color: isPending ? '#f1c40f' : '#2ecc71',
-                                                border: `1px solid ${isPending ? '#f1c40f' : '#2ecc71'}`
-                                            }}>
-                                    {isPending ? '⏳ PENDING' : '✅ DRAWN'}
-                                </span>
-                                        </div>
-
-                                        <p style={{ margin: '5px 0' }}>Numbers: <strong>{t.ticketDto.numbers.join(', ')}</strong></p>
-
-                                        <div style={{ display: 'flex', gap: '15px', fontSize: '0.8rem', color: '#888' }}>
-                                            <span>📅 Draw: {formatDate(t.ticketDto.drawDate)}</span>
-                                            <span>🆔 ID: {t.ticketDto.hash.substring(0, 8)}...</span>
-                                        </div>
-                                    </div>
-
-                                    <button onClick={() => copyToClipboard(t.ticketDto.hash)} className="copy-btn-small" style={{ marginLeft: '10px' }}>
-                                        {copiedId === t.ticketDto.hash ? '✅' : '📋'}
-                                    </button>
+                    allTickets.map((t, idx) => (
+                        <div key={t.ticketDto.hash} className="history-item">
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                <div>
+                                    <span>#{allTickets.length - idx}</span>
+                                    <p>Numbers: <strong>{t.ticketDto.numbers.join(', ')}</strong></p>
+                                    <p style={{fontSize: '0.8rem', color: '#888'}}>ID: {t.ticketDto.hash}</p>
                                 </div>
+                                <button onClick={() => copyToClipboard(t.ticketDto.hash)} className="copy-btn-small">
+                                    {copiedId === t.ticketDto.hash ? '✅' : '📋'}
+                                </button>
                             </div>
-                        );
-                    })
+                        </div>
+                    ))
                 }
             </div>
 

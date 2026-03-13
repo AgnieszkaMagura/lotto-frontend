@@ -9,7 +9,7 @@ export interface LottoGame {
     message: string;
 }
 
-// To musi odpowiadać Twojej klasie ResponseDto w Javie
+// This must match your Java ResponseDto class
 export interface ResponseDto {
     hash: string;
     numbers: Set<number> | number[]; // Twoje wybrane liczby
@@ -18,7 +18,7 @@ export interface ResponseDto {
     isWinner: boolean;
 }
 
-// To odpowiada klasie ResultAnnouncerResponseDto
+// This matches the ResultAnnouncerResponseDto class
 export interface ResultDto {
     responseDto: ResponseDto | null; // Tu są ukryte wyniki!
     message: string;
