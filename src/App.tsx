@@ -473,8 +473,13 @@ const App: React.FC = () => {
                 }
             </div>
 
-            <footer className="footer">
-                <p>Developed by Agnieszka Magura. All rights reserved.</p>
+            <footer className="footer-container">
+                <p>© {new Date().getFullYear()} Developed with ❤️ by <strong>Agnieszka Magura</strong></p>
+                <div className="social-links">
+                    <a href="https://github.com/AgnieszkaMagura" target="_blank" rel="noreferrer">GitHub</a>
+                    <span className="separator"> | </span>
+                    <a href="https://www.linkedin.com/in/agnieszka-magura-0714241a8/" target="_blank" rel="noreferrer">LinkedIn</a>
+                </div>
             </footer>
         </div>
     );
