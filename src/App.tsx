@@ -173,14 +173,21 @@ const App: React.FC = () => {
             cleanHash = cleanHash.replace(/ID:/i, "").trim();
         }
 
+        // 1. Walidacja pustego pola
         if (!cleanHash) {
             setError("Please enter a Ticket ID first.");
             return;
         }
 
+        // 2. Walidacja długości (zakładając, że Twoje UUID mają min. 20 znaków)
+        if (cleanHash.length < 10) {
+            setError("Invalid Ticket ID. The ID is too short.");
+            return;
+        }
+
         setLoading(true);
         setError(null);
-        setGameResult(null); // <--- KLUCZOWE: Czyścimy stary wynik przed sprawdzeniem nowego!
+        setGameResult(null);
 
         setSearchHash('');
         setTicket(null);
@@ -191,7 +198,6 @@ const App: React.FC = () => {
                 {headers: {Authorization: `Bearer ${token}`}}
             );
 
-            // Jeśli dostaliśmy bilet, sprawdzamy czy ma już wyniki (responseDto)
             if (response.data.responseDto) {
                 setGameResult(response.data);
 
@@ -204,14 +210,15 @@ const App: React.FC = () => {
                     });
                 }
             } else {
-                // Jeśli bilet istnieje, ale nie ma wyników (np. serwer zwrócił 200 ale pusty obiekt)
                 setError(response.data.message || "Results not ready yet.");
             }
 
         } catch (err: any) {
-            // TUTAJ trafia błąd 404 z wiadomością "Your ticket is waiting..."
+            // 3. Obsługa błędów z serwera (np. 404 dla nieistniejącego hash)
             if (err.response && err.response.status === 404) {
-                setError(err.response.data.message || "Ticket not found or results not ready.");
+                setError("Ticket not found. Please check if the ID is correct.");
+            } else if (err.response && err.response.status === 400) {
+                setError("The provided Ticket ID format is invalid.");
             } else {
                 setError("Server error. Please try again later.");
             }
