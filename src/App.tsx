@@ -33,6 +33,7 @@ const App: React.FC = () => {
     useEffect(() => {
         if (user) {
             const saved = localStorage.getItem(`lotto_history_${user}`);
+            // Jeśli znajdzie historię dla TEGO usera - ładuje, jeśli nie - czyści do pustej tablicy
             setAllTickets(saved ? JSON.parse(saved) : []);
         } else {
             setAllTickets([]);
@@ -86,7 +87,9 @@ const App: React.FC = () => {
 
             if (!isRegistering) {
                 const {username, token} = response.data;
+                // DODAJ TO PONIŻEJ: Czyścimy stare bilety przed wejściem nowego użytkownika
                 setAllTickets([]);
+
                 setUser(username);
                 localStorage.setItem('user', username);
                 localStorage.setItem('token', token);
@@ -177,28 +180,41 @@ const App: React.FC = () => {
 
         setLoading(true);
         setError(null);
+        setGameResult(null); // <--- KLUCZOWE: Czyścimy stary wynik przed sprawdzeniem nowego!
 
         setSearchHash('');
         setTicket(null);
-        // ---------------------------------
 
         const token = localStorage.getItem('token');
         try {
             const response = await axios.get<ResultDto>(`http://localhost:8080/results/${cleanHash}`,
                 {headers: {Authorization: `Bearer ${token}`}}
             );
-            setGameResult(response.data);
 
-            if (response.data.responseDto && (response.data.responseDto.hitNumbers as number[]).length >= 3) {
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: {y: 0.6},
-                    colors: ['#2ecc71', '#f1c40f', '#3498db', '#e74c3c']
-                });
+            // Jeśli dostaliśmy bilet, sprawdzamy czy ma już wyniki (responseDto)
+            if (response.data.responseDto) {
+                setGameResult(response.data);
+
+                if (response.data.responseDto.hitNumbers && Array.from(response.data.responseDto.hitNumbers).length >= 3) {
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: {y: 0.6},
+                        colors: ['#2ecc71', '#f1c40f', '#3498db', '#e74c3c']
+                    });
+                }
+            } else {
+                // Jeśli bilet istnieje, ale nie ma wyników (np. serwer zwrócił 200 ale pusty obiekt)
+                setError(response.data.message || "Results not ready yet.");
             }
+
         } catch (err: any) {
-            setError(err.response?.status === 404 ? "Ticket not found or results not ready." : "Server error.");
+            // TUTAJ trafia błąd 404 z wiadomością "Your ticket is waiting..."
+            if (err.response && err.response.status === 404) {
+                setError(err.response.data.message || "Ticket not found or results not ready.");
+            } else {
+                setError("Server error. Please try again later.");
+            }
         } finally {
             setLoading(false);
         }
@@ -420,31 +436,134 @@ const App: React.FC = () => {
                     </button>
                 </div>
             </div>
-
+            {error && !gameResult && (
+                <div className="instruction-box" style={{
+                    borderLeft: '5px solid #f1c40f',
+                    backgroundColor: 'rgba(241, 196, 15, 0.1)',
+                    marginTop: '20px',
+                    textAlign: 'center'
+                }}>
+                    <h3 style={{ color: '#f1c40f', margin: '0 0 10px 0' }}>⏳ Ticket Status</h3>
+                    <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: '500' }}>{error}</p>
+                </div>
+            )}
             {gameResult && (
-                <div className="result-box">
-                    {gameResult.message === "Results are being calculated, please come back later" ? (
-                        <div className="not-ready-info" style={{textAlign: 'center', padding: '10px'}}>
-                            <h3 style={{color: '#f1c40f'}}>⏳ Results not available yet</h3>
-                            <p>The official draw takes place <strong>every Saturday at 12:00 PM</strong>.</p>
-                            <p>Please come back later to check your ticket. <strong>See you soon!</strong></p>
-                        </div>
-                    ) : (
-                        <>
-                            {!gameResult.message.includes("come back later") && <h3>{gameResult.message}</h3>}
+                <div className={`result-box ${gameResult.responseDto?.isWinner ? 'winner-theme' : ''}`}>
 
-                            {gameResult.responseDto && (
-                                <div className="details">
-                                    <p>Your Matches: <strong>
-                                        {(gameResult.responseDto.hitNumbers as number[]).join(', ') || "None"}
-                                    </strong></p>
-                                    <p>Status: {gameResult.responseDto.isWinner ? "WINNER! 🎉" : "TRY AGAIN 😢"}</p>
+                    {/* 1. Nagłówek: Wygrana vs Przegrana vs Specjalna wiadomość */}
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                        {gameResult.responseDto?.isWinner ? (
+                            <h2 style={{ color: '#2ecc71' }}>🎉💰 Congratulations! You won! 💰</h2>
+                        ) : (
+                            <>
+                                {Array.from(gameResult.responseDto?.hitNumbers || []).length < 3 ? (
+                                    <h3 style={{ color: '#e74c3c' }}>❌ No win this time. You need at least 3 matches to win!</h3>
+                                ) : (
+                                    <h3 style={{ color: '#f1c40f' }}>{gameResult.message}</h3>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    {/* 2. Detale losowania */}
+                    {gameResult.responseDto && (
+                        <div className="details" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+
+                            {/* 🔮 Oficjalne wyniki */}
+                            <div>
+                                <p style={{ marginBottom: '8px' }}><strong>💰 Official Winning Numbers:</strong></p>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    {Array.from(gameResult.responseDto.winningNumbers || []).map((num: number) => (
+                                        <span key={num} style={{
+                                            backgroundColor: '#f1c40f',
+                                            color: '#2c3e50',
+                                            padding: '5px 12px',
+                                            borderRadius: '20px',
+                                            fontWeight: 'bold',
+                                            boxShadow: '0 2px 4px rgba(241, 196, 15, 0.4)'
+                                        }}>
+                                            {num}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 🎟️ Twoje liczby */}
+                            <div>
+                                <p style={{ marginBottom: '8px' }}><strong>🎟️ Your Ticket Numbers:</strong></p>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    {Array.from(gameResult.responseDto.numbers || []).map((num: any) => {
+                                        // KLUCZOWA POPRAWKA:
+                                        // Tworzymy tablicę czystych liczb z hitNumbers
+                                        const hits = Array.from(gameResult.responseDto?.hitNumbers || []).map(h => Number(h));
+                                        // Porównujemy liczbę z liczbą
+                                        const isHit = hits.includes(Number(num));
+
+                                        return (
+                                            <span key={num} style={{
+                                                backgroundColor: isHit ? '#2ecc71' : 'var(--bg-color)',
+                                                color: isHit ? 'white' : 'var(--text-color)',
+                                                border: `1px solid ${isHit ? '#2ecc71' : 'var(--border-color)'}`,
+                                                padding: '5px 12px',
+                                                borderRadius: '20px',
+                                                fontWeight: isHit ? 'bold' : 'normal',
+                                                fontSize: '0.9rem',
+                                                transition: 'all 0.3s ease'
+                                            }}>{num}</span>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* ✅ Trafione liczby (Matched Numbers) */}
+                            {Array.from(gameResult.responseDto.hitNumbers || []).length > 0 && (
+                                <div style={{ marginTop: '5px' }}>
+                                    <p style={{ marginBottom: '8px' }}><strong>✅ Matched Numbers:</strong></p>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                        {Array.from(gameResult.responseDto.hitNumbers).map((num: number) => (
+                                            <span key={num} style={{
+                                                backgroundColor: '#ffcc00',
+                                                color: '#000',
+                                                padding: '5px 12px',
+                                                borderRadius: '20px',
+                                                fontWeight: 'bold',
+                                                fontSize: '0.9rem',
+                                                boxShadow: '0 2px 4px rgba(255, 204, 0, 0.3)'
+                                            }}>
+                                                {num}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
-                        </>
+
+                            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '15px 0' }} />
+
+                            {/* Statystyki na dole */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <p style={{ margin: 0 }}>🎯 <strong>Matched Count:</strong>
+                                    <span style={{ marginLeft: '10px', fontSize: '1.2rem', color: '#2ecc71', fontWeight: 'bold' }}>
+                                        {Array.from(gameResult.responseDto.hitNumbers || []).length} / 6
+                                    </span>
+                                </p>
+                                <p style={{ margin: 0 }}>📊 <strong>Status:</strong>
+                                    <span style={{
+                                        marginLeft: '10px',
+                                        padding: '4px 10px',
+                                        borderRadius: '6px',
+                                        backgroundColor: gameResult.responseDto.isWinner ? 'rgba(46, 204, 113, 0.2)' : 'rgba(231, 76, 60, 0.2)',
+                                        color: gameResult.responseDto.isWinner ? '#2ecc71' : '#e74c3c',
+                                        fontWeight: 'bold'
+                                    }}>
+                                        {gameResult.responseDto.isWinner ? "WINNER" : "TRY AGAIN"}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
                     )}
-                    <button onClick={playAgain} className="play-again-button" style={{marginTop: '20px'}}>
-                        🔄 Buy Another Ticket
+
+                    <button onClick={playAgain} className="play-again-button">
+                        🔄 Try Another Ticket
                     </button>
                 </div>
             )}
@@ -471,8 +590,8 @@ const App: React.FC = () => {
                         </div>
                     ))
                 }
-            </div>
 
+            </div>
             <footer className="footer-container">
                 <p>© {new Date().getFullYear()} Developed with ❤️ by <strong>Agnieszka Magura</strong></p>
                 <div className="social-links">
