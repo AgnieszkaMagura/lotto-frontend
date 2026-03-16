@@ -24,7 +24,6 @@ const getTimeRemaining = (drawDate: string) => {
 
 const App: React.FC = () => {
 
-    // Dodaj to pod istniejącymi stanami
     const [timeLeft, setTimeLeft] = useState<string>("");
     // --- AUTH STATE ---
     const [user, setUser] = useState<string | null>(localStorage.getItem('user'));
@@ -44,7 +43,6 @@ const App: React.FC = () => {
     const [searchHash, setSearchHash] = useState<string>('');
     const specialCharRegex = /[!@#$%^&*()_+\-=[{};':"\\|,.<>/?]/;
 
-    // Efekt odliczania - poprawiona wersja z "ułatwiaczem"
     useEffect(() => {
         if (!ticket?.ticketDto.drawDate) return;
 
@@ -55,10 +53,7 @@ const App: React.FC = () => {
                 setTimeLeft("Results are ready! Checking...");
                 clearInterval(timer);
 
-                // --- TUTAJ WSTAWIAMY USPRAWNIENIE ---
-                // Automatycznie wpisujemy hash biletu do pola wyszukiwania
                 setSearchHash(ticket.ticketDto.hash);
-                // ------------------------------------
 
             } else {
                 setTimeLeft(remaining.formatted);
@@ -78,7 +73,6 @@ const App: React.FC = () => {
     useEffect(() => {
         if (user) {
             const saved = localStorage.getItem(`lotto_history_${user}`);
-            // Jeśli znajdzie historię dla TEGO usera - ładuje, jeśli nie - czyści do pustej tablicy
             setAllTickets(saved ? JSON.parse(saved) : []);
         } else {
             setAllTickets([]);
@@ -132,9 +126,7 @@ const App: React.FC = () => {
 
             if (!isRegistering) {
                 const {username, token} = response.data;
-                // DODAJ TO PONIŻEJ: Czyścimy stare bilety przed wejściem nowego użytkownika
                 setAllTickets([]);
-
                 setUser(username);
                 localStorage.setItem('user', username);
                 localStorage.setItem('token', token);
@@ -218,15 +210,8 @@ const App: React.FC = () => {
             cleanHash = cleanHash.replace(/ID:/i, "").trim();
         }
 
-        // 1. Walidacja pustego pola
         if (!cleanHash) {
             setError("Please enter a Ticket ID first.");
-            return;
-        }
-
-        // 2. Walidacja długości (zakładając, że Twoje UUID mają min. 20 znaków)
-        if (cleanHash.length < 10) {
-            setError("Invalid Ticket ID. The ID is too short.");
             return;
         }
 
@@ -234,36 +219,51 @@ const App: React.FC = () => {
         setError(null);
         setGameResult(null);
 
-        setSearchHash('');
-        setTicket(null);
-
         const token = localStorage.getItem('token');
+        const ticketInHistory = allTickets.find(t => t.ticketDto.hash === cleanHash);
+
         try {
             const response = await axios.get<ResultDto>(`http://localhost:8080/results/${cleanHash}`,
-                {headers: {Authorization: `Bearer ${token}`}}
+                { headers: { Authorization: `Bearer ${token}` } }
             );
+
+            const isCalculating = response.data.message === "Results are being calculated, please come back later";
+            const drawDateNotReached = ticketInHistory?.ticketDto.drawDate
+                ? new Date(ticketInHistory.ticketDto.drawDate) > new Date()
+                : false;
+
+            if (isCalculating || drawDateNotReached) {
+                setError("Results are not ready yet. The draw takes place every Saturday at 12:00 PM. Please come back later.");
+                setGameResult(null);
+                setSearchHash('');
+                return;
+            }
 
             if (response.data.responseDto) {
                 setGameResult(response.data);
+                setSearchHash('');
 
                 if (response.data.responseDto.hitNumbers && Array.from(response.data.responseDto.hitNumbers).length >= 3) {
                     confetti({
                         particleCount: 150,
                         spread: 70,
-                        origin: {y: 0.6},
+                        origin: { y: 0.6 },
                         colors: ['#2ecc71', '#f1c40f', '#3498db', '#e74c3c']
                     });
                 }
             } else {
                 setError(response.data.message || "Results not ready yet.");
+                setSearchHash('');
             }
 
         } catch (err: any) {
-            // 3. Obsługa błędów z serwera (np. 404 dla nieistniejącego hash)
             if (err.response && err.response.status === 404) {
-                setError("Ticket not found. Please check if the ID is correct.");
-            } else if (err.response && err.response.status === 400) {
-                setError("The provided Ticket ID format is invalid.");
+                if (ticketInHistory) {
+                    setError("The draw takes place every Saturday at 12:00 PM. Your results will be available then. Please come back later.");
+                    setSearchHash('');
+                } else {
+                    setError("Ticket not found. Please check if the ID is correct.");
+                }
             } else {
                 setError("Server error. Please try again later.");
             }
@@ -327,7 +327,7 @@ const App: React.FC = () => {
                                 color: 'var(--text-color)'
                             }}
                         >
-                            {showPassword ? '👁️' : '🙈'}
+                            {showPassword ? '🔓' : '🔒'}
                         </button>
                     </div>
 
@@ -431,7 +431,6 @@ const App: React.FC = () => {
                 <div className="ticket-box">
                     <h3>Ticket Registered!</h3>
 
-                    {/* NOWA SEKCJA LICZNIKA */}
                     <div className="countdown-display" style={{
                         padding: '10px',
                         backgroundColor: 'rgba(52, 152, 219, 0.1)',
@@ -442,6 +441,9 @@ const App: React.FC = () => {
                     }}>
                         <p style={{ margin: 0, fontSize: '0.9rem' }}>Time until draw:</p>
                         <strong style={{ fontSize: '1.2rem', color: '#3498db' }}>{timeLeft || "Calculating..."}</strong>
+                        <p style={{ margin: '5px 0 0 0', fontSize: '0.8rem', opacity: 0.8, fontStyle: 'italic' }}>
+                            ⚠️ Results will be available immediately after the draw. Please come back later.
+                        </p>
                     </div>
 
                     <div style={{ /* style dla ID */ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -507,7 +509,6 @@ const App: React.FC = () => {
             {gameResult && (
                 <div className={`result-box ${gameResult.responseDto?.isWinner ? 'winner-theme' : ''}`}>
 
-                    {/* 1. Nagłówek: Wygrana vs Przegrana vs Specjalna wiadomość */}
                     <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                         {gameResult.responseDto?.isWinner ? (
                             <h2 style={{ color: '#2ecc71' }}>🎉💰 Congratulations! You won! 💰</h2>
@@ -522,15 +523,13 @@ const App: React.FC = () => {
                         )}
                     </div>
 
-                    {/* 2. Detale losowania */}
                     {gameResult.responseDto && (
                         <div className="details" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '15px' }}>
 
-                            {/* 🔮 Oficjalne wyniki */}
                             <div>
                                 <p style={{ marginBottom: '8px' }}><strong>💰 Official Winning Numbers:</strong></p>
                                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                    {Array.from(gameResult.responseDto.winningNumbers || []).map((num: number) => (
+                                    {Array.from(gameResult.responseDto.wonNumbers || []).map((num: number) => (
                                         <span key={num} style={{
                                             backgroundColor: '#f1c40f',
                                             color: '#2c3e50',
@@ -545,15 +544,11 @@ const App: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* 🎟️ Twoje liczby */}
                             <div>
                                 <p style={{ marginBottom: '8px' }}><strong>🎟️ Your Ticket Numbers:</strong></p>
                                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                                     {Array.from(gameResult.responseDto.numbers || []).map((num: any) => {
-                                        // KLUCZOWA POPRAWKA:
-                                        // Tworzymy tablicę czystych liczb z hitNumbers
                                         const hits = Array.from(gameResult.responseDto?.hitNumbers || []).map(h => Number(h));
-                                        // Porównujemy liczbę z liczbą
                                         const isHit = hits.includes(Number(num));
 
                                         return (
@@ -572,7 +567,6 @@ const App: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* ✅ Trafione liczby (Matched Numbers) */}
                             {Array.from(gameResult.responseDto.hitNumbers || []).length > 0 && (
                                 <div style={{ marginTop: '5px' }}>
                                     <p style={{ marginBottom: '8px' }}><strong>✅ Matched Numbers:</strong></p>
@@ -596,7 +590,6 @@ const App: React.FC = () => {
 
                             <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '15px 0' }} />
 
-                            {/* Statystyki na dole */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <p style={{ margin: 0 }}>🎯 <strong>Matched Count:</strong>
                                     <span style={{ marginLeft: '10px', fontSize: '1.2rem', color: '#2ecc71', fontWeight: 'bold' }}>

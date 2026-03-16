@@ -14,7 +14,7 @@ export interface ResponseDto {
     hash: string;
     numbers: Set<number> | number[]; // Twoje wybrane liczby
     hitNumbers: Set<number> | number[]; // Trafienia
-    winningNumbers: number[];
+    wonNumbers: number[];
     drawDate: string;
     isWinner: boolean;
 }
