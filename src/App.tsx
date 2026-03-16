@@ -4,7 +4,28 @@ import confetti from 'canvas-confetti';
 import './App.css';
 import {LottoGame, ResultDto} from './types';
 
+// --- UTILS ---
+const getTimeRemaining = (drawDate: string) => {
+    const total = Date.parse(drawDate) - Date.parse(new Date().toISOString());
+    const seconds = Math.floor((total / 1000) % 60);
+    const minutes = Math.floor((total / 1000 / 60) % 60);
+    const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(total / (1000 * 60 * 60 * 24));
+
+    return {
+        total,
+        days,
+        hours,
+        minutes,
+        seconds,
+        formatted: `${days}d ${hours}h ${minutes}m ${seconds}s`
+    };
+};
+
 const App: React.FC = () => {
+
+    // Dodaj to pod istniejącymi stanami
+    const [timeLeft, setTimeLeft] = useState<string>("");
     // --- AUTH STATE ---
     const [user, setUser] = useState<string | null>(localStorage.getItem('user'));
     const [authData, setAuthData] = useState({username: '', password: ''});
@@ -22,6 +43,30 @@ const App: React.FC = () => {
     const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem('theme') === 'dark');
     const [searchHash, setSearchHash] = useState<string>('');
     const specialCharRegex = /[!@#$%^&*()_+\-=[{};':"\\|,.<>/?]/;
+
+    // Efekt odliczania - poprawiona wersja z "ułatwiaczem"
+    useEffect(() => {
+        if (!ticket?.ticketDto.drawDate) return;
+
+        const timer = setInterval(() => {
+            const remaining = getTimeRemaining(ticket.ticketDto.drawDate);
+
+            if (remaining.total <= 0) {
+                setTimeLeft("Results are ready! Checking...");
+                clearInterval(timer);
+
+                // --- TUTAJ WSTAWIAMY USPRAWNIENIE ---
+                // Automatycznie wpisujemy hash biletu do pola wyszukiwania
+                setSearchHash(ticket.ticketDto.hash);
+                // ------------------------------------
+
+            } else {
+                setTimeLeft(remaining.formatted);
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [ticket]);
 
     // --- THEME EFFECT ---
     useEffect(() => {
@@ -385,16 +430,21 @@ const App: React.FC = () => {
             {ticket && (
                 <div className="ticket-box">
                     <h3>Ticket Registered!</h3>
-                    <div style={{
-                        backgroundColor: 'var(--bg-color)',
+
+                    {/* NOWA SEKCJA LICZNIKA */}
+                    <div className="countdown-display" style={{
                         padding: '10px',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
                         borderRadius: '8px',
-                        margin: '10px 0',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        border: '1px solid var(--border-color)'
+                        marginBottom: '15px',
+                        border: '1px solid #3498db',
+                        textAlign: 'center'
                     }}>
+                        <p style={{ margin: 0, fontSize: '0.9rem' }}>Time until draw:</p>
+                        <strong style={{ fontSize: '1.2rem', color: '#3498db' }}>{timeLeft || "Calculating..."}</strong>
+                    </div>
+
+                    <div style={{ /* style dla ID */ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <p style={{margin: 0}}><strong>ID:</strong> <code>{ticket.ticketDto.hash}</code></p>
                         <button onClick={() => copyToClipboard(ticket.ticketDto.hash)} className="copy-btn-small">
                             {copiedId === ticket.ticketDto.hash ? '✅ Copied!' : '📋 Copy ID'}
