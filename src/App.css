@@ -206,13 +206,13 @@ button.selected {
     margin-top: 40px;
     padding: 20px;
     text-align: center;
-    color: #b0b0b0; /* Delikatny szary, żeby nie bił po oczach */
+    color: #b0b0b0;
     font-size: 0.9rem;
-    border-top: 1px solid #333; /* Subtelna linia oddzielająca */
+    border-top: 1px solid #333;
 }
 
 .social-links a {
-    color: #61dafb; /* Kolor Reactowy lub błękitny pod LinkedIn */
+    color: #61dafb;
     text-decoration: none;
     margin: 0 10px;
     transition: opacity 0.3s;
@@ -250,5 +250,23 @@ button.selected {
 @keyframes popIn {
     0% { transform: scale(0); }
     80% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.draw-status-pill {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(46, 204, 113, 0.2));
+    border: 1px dashed var(--primary-color);
+    padding: 12px;
+    border-radius: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+    animation: pulse-soft 2s infinite;
+}
+
+@keyframes pulse-soft {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
     100% { transform: scale(1); }
 }

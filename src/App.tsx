@@ -387,14 +387,27 @@ const App: React.FC = () => {
             <div className="instruction-box">
                 <h2>How to Play</h2>
                 <div className="steps-guide">
-                    <p>1. Select your <strong>6 lucky and unique numbers</strong> (1-99) from the grid below or just fill the fields randomly.</p>
-                    <p>2. Click the <strong>"REGISTER TICKET"</strong> button to enter the draw.</p>
-                    <p>3. Check your results using the generated <strong>Ticket ID</strong>.</p>
+                    <p>🎯 1. Select your <strong>6 lucky numbers</strong> (1-99) or use <strong>Quick Pick</strong>.</p>
+                    <p>🚀 2. Click <strong>"REGISTER TICKET"</strong> to join the upcoming draw.</p>
+                    <p>🔍 3. Use your <strong>Ticket ID</strong> to check for winnings on Saturday!</p>
                 </div>
                 <div className="draw-status-pill">
                     <span className="calendar-icon">📅</span>
                     <span>Next Official Draw: <strong>Every Saturday at 12:00 PM</strong></span>
                 </div>
+                <div>
+                <p style={{
+                    marginTop: '15px',
+                    fontSize: '0.8rem',
+                    opacity: 0.7,
+                    textAlign: 'center',
+                    borderTop: '1px solid var(--border-color)',
+                    paddingTop: '10px'
+                }}>
+                    🔒 Your tickets are securely stored in your history below.
+                </p>
+            </div>
+
             </div>
 
             <div className="grid">
