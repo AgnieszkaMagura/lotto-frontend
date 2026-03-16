@@ -1,12 +1,13 @@
 :root {
     --primary-color: #28a745;
-    --bg-color: #f4f7f6;
-    --text-color: #2c3e50;
+    --bg-color: #e0f2f1;
+    --text-color: #2d4a53;
     --card-bg: #ffffff;
-    --border-color: #dbe2e8;
+    --border-color: #b2dfdb;
     --button-bg: #ffffff;
-    --button-hover: #f1f3f5;
-    --text-muted: #6c757d;
+    --button-hover: #b2dfdb;
+    --text-muted: #546e7a;
+
 }
 
 [data-theme='dark'] {
