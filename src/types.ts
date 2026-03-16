@@ -9,18 +9,16 @@ export interface LottoGame {
     message: string;
 }
 
-// This must match your Java ResponseDto class
 export interface ResponseDto {
     hash: string;
-    numbers: Set<number> | number[]; // Twoje wybrane liczby
-    hitNumbers: Set<number> | number[]; // Trafienia
+    numbers: Set<number> | number[];
+    hitNumbers: Set<number> | number[];
     wonNumbers: number[];
     drawDate: string;
     isWinner: boolean;
 }
 
-// This matches the ResultAnnouncerResponseDto class
 export interface ResultDto {
-    responseDto: ResponseDto | null; // Tu są ukryte wyniki!
+    responseDto: ResponseDto | null;
     message: string;
 }
