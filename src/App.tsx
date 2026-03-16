@@ -195,8 +195,15 @@ const App: React.FC = () => {
                 {inputNumbers: selectedNumbers},
                 {headers: {Authorization: `Bearer ${token}`}}
             );
-            setTicket(response.data);
-            setAllTickets(prev => [response.data, ...prev]);
+
+            // Tworzymy rozszerzony obiekt z datą zakupu
+            const ticketWithPurchaseDate = {
+                ...response.data,
+                purchaseDate: new Date().toISOString() // Dodajemy aktualny czas
+            };
+
+            setTicket(ticketWithPurchaseDate);
+            setAllTickets(prev => [ticketWithPurchaseDate, ...prev]);
         } catch (err) {
             setError("Error while sending the ticket.");
         } finally {
@@ -639,13 +646,26 @@ const App: React.FC = () => {
                 </div>
                 {allTickets.length === 0 ? <p>No tickets yet.</p> :
                     allTickets.map((t, idx) => (
-                        <div key={t.ticketDto.hash} className="history-item">
-                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                                <div>
-                                    <span>#{allTickets.length - idx}</span>
-                                    <p>Numbers: <strong>{t.ticketDto.numbers.join(', ')}</strong></p>
-                                    <p style={{fontSize: '0.8rem', color: '#888'}}>ID: {t.ticketDto.hash}</p>
+                        <div key={t.ticketDto.hash} className="history-item" style={{ marginBottom: '15px' }}>
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                                        <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>#{allTickets.length - idx}</span>
+                                        <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>
+                                📅 Purchased: {t.purchaseDate ? new Date(t.purchaseDate).toLocaleString() : 'N/A'}
+                            </span>
+                                    </div>
+
+                                    <p style={{ margin: '5px 0' }}>Numbers: <strong>{t.ticketDto.numbers.join(', ')}</strong></p>
+
+                                    <div style={{ fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                        <p style={{ margin: 0, color: '#3498db' }}>
+                                            🎰 Draw Date: <strong>{new Date(t.ticketDto.drawDate).toLocaleString()}</strong>
+                                        </p>
+                                        <p style={{ margin: 0, opacity: 0.6 }}>ID: {t.ticketDto.hash}</p>
+                                    </div>
                                 </div>
+
                                 <button onClick={() => copyToClipboard(t.ticketDto.hash)} className="copy-btn-small">
                                     {copiedId === t.ticketDto.hash ? '✅' : '📋'}
                                 </button>
@@ -653,8 +673,8 @@ const App: React.FC = () => {
                         </div>
                     ))
                 }
-
             </div>
+
             <footer className="footer-container">
                 <p>© {new Date().getFullYear()} Developed with ❤️ by <strong>Agnieszka Magura</strong></p>
                 <div className="social-links">
