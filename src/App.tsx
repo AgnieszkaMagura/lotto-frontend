@@ -1,6 +1,9 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import axios from 'axios';
 import confetti from 'canvas-confetti';
+
+import Confetti from 'react-confetti';
+import { useWindowSize } from 'react-use';
 import './App.css';
 import {LottoGame, ResultDto} from './types';
 
@@ -23,9 +26,7 @@ const getTimeRemaining = (drawDate: string) => {
 };
 
 const App: React.FC = () => {
-    // --- REFS ---
-    const resultsRef = useRef<HTMLDivElement>(null);
-
+    const { width, height } = useWindowSize();
     const [timeLeft, setTimeLeft] = useState<string>("");
     // --- AUTH STATE ---
     const [user, setUser] = useState<string | null>(localStorage.getItem('user'));
@@ -54,7 +55,9 @@ const App: React.FC = () => {
             if (remaining.total <= 0) {
                 setTimeLeft("Results are ready! Checking...");
                 clearInterval(timer);
+
                 setSearchHash(ticket.ticketDto.hash);
+
             } else {
                 setTimeLeft(remaining.formatted);
             }
@@ -63,11 +66,13 @@ const App: React.FC = () => {
         return () => clearInterval(timer);
     }, [ticket]);
 
+    // --- THEME EFFECT ---
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
         localStorage.setItem('theme', darkMode ? 'dark' : 'light');
     }, [darkMode]);
 
+    // --- DYNAMIC HISTORY LOADING ---
     useEffect(() => {
         if (user) {
             const saved = localStorage.getItem(`lotto_history_${user}`);
@@ -77,12 +82,14 @@ const App: React.FC = () => {
         }
     }, [user]);
 
+    // --- DYNAMIC HISTORY SAVING ---
     useEffect(() => {
         if (user) {
             localStorage.setItem(`lotto_history_${user}`, JSON.stringify(allTickets));
         }
     }, [allTickets, user]);
 
+    // --- HELPERS ---
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text).then(() => {
             setCopiedId(text);
@@ -90,6 +97,7 @@ const App: React.FC = () => {
         });
     };
 
+    // --- AUTH FUNCTIONS WITH VALIDATION ---
     const handleAuth = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -159,6 +167,7 @@ const App: React.FC = () => {
         localStorage.removeItem('token');
     };
 
+    // --- GAME FUNCTIONS ---
     const toggleNumber = (num: number) => {
         setError(null);
         if (selectedNumbers.includes(num)) {
@@ -243,13 +252,17 @@ const App: React.FC = () => {
                 setGameResult(response.data);
                 setSearchHash('');
 
-                if (response.data.responseDto.hitNumbers && Array.from(response.data.responseDto.hitNumbers).length >= 3) {
-                    confetti({
-                        particleCount: 150,
-                        spread: 70,
-                        origin: { y: 0.6 },
-                        colors: ['#2ecc71', '#f1c40f', '#3498db', '#e74c3c']
-                    });
+                if (response.data.responseDto.hitNumbers) {
+                    const hitsCount = Array.from(response.data.responseDto.hitNumbers).length;
+
+                    if (hitsCount >= 3) {
+                        confetti({
+                            particleCount: hitsCount === 6 ? 500 : 150,
+                            spread: hitsCount === 6 ? 160 : 70,
+                            origin: { y: 0.6 },
+                            colors: ['#2ecc71', '#f1c40f', '#3498db', '#e74c3c']
+                        });
+                    }
                 }
             } else {
                 setError(response.data.message || "Results not ready yet.");
@@ -369,6 +382,16 @@ const App: React.FC = () => {
 
     return (
         <div className="container">
+            {gameResult?.responseDto?.isWinner && (
+                <Confetti
+                    width={width}
+                    height={height}
+                    recycle={Array.from(gameResult.responseDto.hitNumbers).length === 6}
+                    numberOfPieces={Array.from(gameResult.responseDto.hitNumbers).length === 6 ? 1500 : 500}
+                    gravity={0.1}
+                    style={{ position: 'fixed', top: 0, left: 0, zIndex: 1000 }}
+                />
+            )}
             <div className="header-actions">
                 <span>Welcome, <strong>{user}</strong>!</span>
                 <div className="buttons">
@@ -395,6 +418,7 @@ const App: React.FC = () => {
                     <span className="calendar-icon">📅</span>
                     <span>Next Official Draw: <strong>Every Saturday at 12:00 PM</strong></span>
                 </div>
+                <div>
                 <p style={{
                     marginTop: '15px',
                     fontSize: '0.8rem',
@@ -405,6 +429,8 @@ const App: React.FC = () => {
                 }}>
                     🔒 Your tickets are securely stored in your history below.
                 </p>
+            </div>
+
             </div>
 
             <div className="grid">
@@ -440,6 +466,7 @@ const App: React.FC = () => {
             {ticket && (
                 <div className="ticket-box">
                     <h3>Ticket Registered!</h3>
+
                     <div className="countdown-display" style={{
                         padding: '10px',
                         backgroundColor: 'rgba(52, 152, 219, 0.1)',
@@ -455,7 +482,7 @@ const App: React.FC = () => {
                         </p>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ /* style dla ID */ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <p style={{margin: 0}}><strong>ID:</strong> <code>{ticket.ticketDto.hash}</code></p>
                         <button onClick={() => copyToClipboard(ticket.ticketDto.hash)} className="copy-btn-small">
                             {copiedId === ticket.ticketDto.hash ? '✅ Copied!' : '📋 Copy ID'}
@@ -464,7 +491,7 @@ const App: React.FC = () => {
                 </div>
             )}
 
-            <div ref={resultsRef} className="search-section" style={{ marginTop: '30px', padding: '20px', backgroundColor: 'var(--card-bg)', borderRadius: '12px' }}>
+            <div className="search-section" style={{ marginTop: '30px', padding: '20px', backgroundColor: 'var(--card-bg)', borderRadius: '12px' }}>
                 <h3>Check Your Results</h3>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <input
@@ -504,7 +531,6 @@ const App: React.FC = () => {
                     </button>
                 </div>
             </div>
-
             {error && !gameResult && (
                 <div className="instruction-box" style={{
                     borderLeft: '5px solid #f1c40f',
@@ -516,9 +542,9 @@ const App: React.FC = () => {
                     <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: '500' }}>{error}</p>
                 </div>
             )}
-
             {gameResult && (
                 <div className={`result-box ${gameResult.responseDto?.isWinner ? 'winner-theme' : ''}`}>
+
                     <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                         {gameResult.responseDto?.isWinner ? (
                             <h2 style={{ color: '#2ecc71' }}>🎉💰 Congratulations! You won! 💰</h2>
@@ -532,8 +558,10 @@ const App: React.FC = () => {
                             </>
                         )}
                     </div>
+
                     {gameResult.responseDto && (
                         <div className="details" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+
                             <div>
                                 <p style={{ marginBottom: '8px' }}><strong>💰 Official Winning Numbers:</strong></p>
                                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -545,7 +573,9 @@ const App: React.FC = () => {
                                             borderRadius: '20px',
                                             fontWeight: 'bold',
                                             boxShadow: '0 2px 4px rgba(241, 196, 15, 0.4)'
-                                        }}>{num}</span>
+                                        }}>
+                                            {num}
+                                        </span>
                                     ))}
                                 </div>
                             </div>
@@ -556,20 +586,43 @@ const App: React.FC = () => {
                                     {Array.from(gameResult.responseDto.numbers || []).map((num: any) => {
                                         const hits = Array.from(gameResult.responseDto?.hitNumbers || []).map(h => Number(h));
                                         const isHit = hits.includes(Number(num));
+
                                         return (
                                             <span key={num} style={{
-                                                backgroundColor: isHit ? '#f1c40f' : 'var(--bg-color)',
-                                                color: isHit ? '#2c3e50' : 'var(--text-color)',
+                                                backgroundColor: isHit ? '#2ecc71' : 'var(--bg-color)',
+                                                color: isHit ? 'white' : 'var(--text-color)',
                                                 border: `1px solid ${isHit ? '#2ecc71' : 'var(--border-color)'}`,
                                                 padding: '5px 12px',
                                                 borderRadius: '20px',
                                                 fontWeight: isHit ? 'bold' : 'normal',
-                                                fontSize: '0.9rem'
+                                                fontSize: '0.9rem',
+                                                transition: 'all 0.3s ease'
                                             }}>{num}</span>
                                         );
                                     })}
                                 </div>
                             </div>
+
+                            {Array.from(gameResult.responseDto.hitNumbers || []).length > 0 && (
+                                <div style={{ marginTop: '5px' }}>
+                                    <p style={{ marginBottom: '8px' }}><strong>✅ Matched Numbers:</strong></p>
+                                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                        {Array.from(gameResult.responseDto.hitNumbers).map((num: number) => (
+                                            <span key={num} style={{
+                                                backgroundColor: '#ffcc00',
+                                                color: '#000',
+                                                padding: '5px 12px',
+                                                borderRadius: '20px',
+                                                fontWeight: 'bold',
+                                                fontSize: '0.9rem',
+                                                boxShadow: '0 2px 4px rgba(255, 204, 0, 0.3)'
+                                            }}>
+                                                {num}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '15px 0' }} />
 
@@ -594,7 +647,10 @@ const App: React.FC = () => {
                             </div>
                         </div>
                     )}
-                    <button onClick={playAgain} className="play-again-button">🔄 Try Another Ticket</button>
+
+                    <button onClick={playAgain} className="play-again-button">
+                        🔄 Try Another Ticket
+                    </button>
                 </div>
             )}
 
@@ -606,27 +662,18 @@ const App: React.FC = () => {
                 </div>
                 {allTickets.length === 0 ? <p>No tickets yet.</p> :
                     allTickets.map((t, idx) => (
-                        <div
-                            key={t.ticketDto.hash}
-                            className="history-item"
-                            style={{ marginBottom: '15px', cursor: 'pointer' }}
-                            onClick={() => {
-                                setSearchHash(t.ticketDto.hash);
-                                resultsRef.current?.scrollIntoView({
-                                    behavior: 'smooth',
-                                    block: 'center'
-                                });
-                            }}
-                        >
+                        <div key={t.ticketDto.hash} className="history-item" style={{ marginBottom: '15px' }}>
                             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
                                 <div style={{ flex: 1 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
                                         <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>#{allTickets.length - idx}</span>
                                         <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>
-                                            📅 Purchased: {t.purchaseDate ? new Date(t.purchaseDate).toLocaleString() : 'N/A'}
-                                        </span>
+                                📅 Purchased: {t.purchaseDate ? new Date(t.purchaseDate).toLocaleString() : 'N/A'}
+                            </span>
                                     </div>
+
                                     <p style={{ margin: '5px 0' }}>Numbers: <strong>{t.ticketDto.numbers.join(', ')}</strong></p>
+
                                     <div style={{ fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                         <p style={{ margin: 0, color: '#3498db' }}>
                                             🎰 Draw Date: <strong>{new Date(t.ticketDto.drawDate).toLocaleString()}</strong>
@@ -634,13 +681,8 @@ const App: React.FC = () => {
                                         <p style={{ margin: 0, opacity: 0.6 }}>ID: {t.ticketDto.hash}</p>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        copyToClipboard(t.ticketDto.hash);
-                                    }}
-                                    className="copy-btn-small"
-                                >
+
+                                <button onClick={() => copyToClipboard(t.ticketDto.hash)} className="copy-btn-small">
                                     {copiedId === t.ticketDto.hash ? '✅' : '📋'}
                                 </button>
                             </div>
