@@ -7,6 +7,7 @@ export interface TicketDto {
 export interface LottoGame {
     ticketDto: TicketDto;
     message: string;
+    purchaseDate?: string;
 }
 
 export interface ResponseDto {
