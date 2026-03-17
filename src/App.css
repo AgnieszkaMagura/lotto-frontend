@@ -310,3 +310,20 @@ button.selected {
 [data-theme='dark'] .purchase-badge {
     color: #adb5bd;
 }
+
+.tech-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: monospace;
+}
+
+.footer-container {
+    text-align: center;
+    padding-bottom: 40px;
+}
+
+.social-links a:hover {
+    color: #2ecc71 !important;
+    text-decoration: underline !important;
+}
