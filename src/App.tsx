@@ -3,7 +3,7 @@ import axios from 'axios';
 import confetti from 'canvas-confetti';
 
 import Confetti from 'react-confetti';
-import { useWindowSize } from 'react-use';
+import {useWindowSize} from 'react-use';
 import './App.css';
 import {LottoGame, ResultDto} from './types';
 
@@ -26,7 +26,7 @@ const getTimeRemaining = (drawDate: string) => {
 };
 
 const App: React.FC = () => {
-    const { width, height } = useWindowSize();
+    const {width, height} = useWindowSize();
     const [timeLeft, setTimeLeft] = useState<string>("");
     // --- AUTH STATE ---
     const [user, setUser] = useState<string | null>(localStorage.getItem('user'));
@@ -233,7 +233,7 @@ const App: React.FC = () => {
 
         try {
             const response = await axios.get<ResultDto>(`http://localhost:8080/results/${cleanHash}`,
-                { headers: { Authorization: `Bearer ${token}` } }
+                {headers: {Authorization: `Bearer ${token}`}}
             );
 
             const isCalculating = response.data.message === "Results are being calculated, please come back later";
@@ -259,7 +259,7 @@ const App: React.FC = () => {
                         confetti({
                             particleCount: hitsCount === 6 ? 500 : 150,
                             spread: hitsCount === 6 ? 160 : 70,
-                            origin: { y: 0.6 },
+                            origin: {y: 0.6},
                             colors: ['#2ecc71', '#f1c40f', '#3498db', '#e74c3c']
                         });
                     }
@@ -389,7 +389,7 @@ const App: React.FC = () => {
                     recycle={Array.from(gameResult.responseDto.hitNumbers).length === 6}
                     numberOfPieces={Array.from(gameResult.responseDto.hitNumbers).length === 6 ? 1500 : 500}
                     gravity={0.1}
-                    style={{ position: 'fixed', top: 0, left: 0, zIndex: 1000 }}
+                    style={{position: 'fixed', top: 0, left: 0, zIndex: 1000}}
                 />
             )}
             <div className="header-actions">
@@ -419,17 +419,17 @@ const App: React.FC = () => {
                     <span>Next Official Draw: <strong>Every Saturday at 12:00 PM</strong></span>
                 </div>
                 <div>
-                <p style={{
-                    marginTop: '15px',
-                    fontSize: '0.8rem',
-                    opacity: 0.7,
-                    textAlign: 'center',
-                    borderTop: '1px solid var(--border-color)',
-                    paddingTop: '10px'
-                }}>
-                    🔒 Your tickets are securely stored in your history below.
-                </p>
-            </div>
+                    <p style={{
+                        marginTop: '15px',
+                        fontSize: '0.8rem',
+                        opacity: 0.7,
+                        textAlign: 'center',
+                        borderTop: '1px solid var(--border-color)',
+                        paddingTop: '10px'
+                    }}>
+                        🔒 Your tickets are securely stored in your history below.
+                    </p>
+                </div>
 
             </div>
 
@@ -475,14 +475,18 @@ const App: React.FC = () => {
                         border: '1px solid #3498db',
                         textAlign: 'center'
                     }}>
-                        <p style={{ margin: 0, fontSize: '0.9rem' }}>Time until draw:</p>
-                        <strong style={{ fontSize: '1.2rem', color: '#3498db' }}>{timeLeft || "Calculating..."}</strong>
-                        <p style={{ margin: '5px 0 0 0', fontSize: '0.8rem', opacity: 0.8, fontStyle: 'italic' }}>
+                        <p style={{margin: 0, fontSize: '0.9rem'}}>Time until draw:</p>
+                        <strong style={{fontSize: '1.2rem', color: '#3498db'}}>{timeLeft || "Calculating..."}</strong>
+                        <p style={{margin: '5px 0 0 0', fontSize: '0.8rem', opacity: 0.8, fontStyle: 'italic'}}>
                             ⚠️ Results will be available immediately after the draw. Please come back later.
                         </p>
                     </div>
 
-                    <div style={{ /* style dla ID */ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ /* style dla ID */
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
                         <p style={{margin: 0}}><strong>ID:</strong> <code>{ticket.ticketDto.hash}</code></p>
                         <button onClick={() => copyToClipboard(ticket.ticketDto.hash)} className="copy-btn-small">
                             {copiedId === ticket.ticketDto.hash ? '✅ Copied!' : '📋 Copy ID'}
@@ -491,9 +495,10 @@ const App: React.FC = () => {
                 </div>
             )}
 
-            <div className="search-section" style={{ marginTop: '30px', padding: '20px', backgroundColor: 'var(--card-bg)', borderRadius: '12px' }}>
+            <div className="search-section"
+                 style={{marginTop: '30px', padding: '20px', backgroundColor: 'var(--card-bg)', borderRadius: '12px'}}>
                 <h3>Check Your Results</h3>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
                     <input
                         type="text"
                         placeholder="Enter Ticket ID..."
@@ -538,33 +543,35 @@ const App: React.FC = () => {
                     marginTop: '20px',
                     textAlign: 'center'
                 }}>
-                    <h3 style={{ color: '#f1c40f', margin: '0 0 10px 0' }}>⏳ Ticket Status</h3>
-                    <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: '500' }}>{error}</p>
+                    <h3 style={{color: '#f1c40f', margin: '0 0 10px 0'}}>⏳ Ticket Status</h3>
+                    <p style={{margin: 0, fontSize: '1.1rem', fontWeight: '500'}}>{error}</p>
                 </div>
             )}
             {gameResult && (
                 <div className={`result-box ${gameResult.responseDto?.isWinner ? 'winner-theme' : ''}`}>
 
-                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                    <div style={{textAlign: 'center', marginBottom: '20px'}}>
                         {gameResult.responseDto?.isWinner ? (
-                            <h2 style={{ color: '#2ecc71' }}>🎉💰 Congratulations! You won! 💰</h2>
+                            <h2 style={{color: '#2ecc71'}}>🎉💰 Congratulations! You won! 💰</h2>
                         ) : (
                             <>
                                 {Array.from(gameResult.responseDto?.hitNumbers || []).length < 3 ? (
-                                    <h3 style={{ color: '#e74c3c' }}>❌ No win this time. You need at least 3 matches to win!</h3>
+                                    <h3 style={{color: '#e74c3c'}}>❌ No win this time. You need at least 3 matches to
+                                        win!</h3>
                                 ) : (
-                                    <h3 style={{ color: '#f1c40f' }}>{gameResult.message}</h3>
+                                    <h3 style={{color: '#f1c40f'}}>{gameResult.message}</h3>
                                 )}
                             </>
                         )}
                     </div>
 
                     {gameResult.responseDto && (
-                        <div className="details" style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div className="details"
+                             style={{textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '15px'}}>
 
                             <div>
-                                <p style={{ marginBottom: '8px' }}><strong>💰 Official Winning Numbers:</strong></p>
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                <p style={{marginBottom: '8px'}}><strong>💰 Official Winning Numbers:</strong></p>
+                                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
                                     {Array.from(gameResult.responseDto.wonNumbers || []).map((num: number) => (
                                         <span key={num} style={{
                                             backgroundColor: '#f1c40f',
@@ -579,8 +586,8 @@ const App: React.FC = () => {
                             </div>
 
                             <div>
-                                <p style={{ marginBottom: '8px' }}><strong>🎟️ Your Ticket Numbers:</strong></p>
-                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                <p style={{marginBottom: '8px'}}><strong>🎟️ Your Ticket Numbers:</strong></p>
+                                <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
                                     {Array.from(gameResult.responseDto.numbers || []).map((num: any) => {
                                         const hits = Array.from(gameResult.responseDto?.hitNumbers || []).map(h => Number(h));
                                         const isHit = hits.includes(Number(num));
@@ -601,15 +608,20 @@ const App: React.FC = () => {
                                 </div>
                             </div>
 
-                            <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '15px 0' }} />
+                            <hr style={{border: 'none', borderTop: '1px solid var(--border-color)', margin: '15px 0'}}/>
 
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <p style={{ margin: 0 }}>🎯 <strong>Matches:</strong>
-                                    <span style={{ marginLeft: '10px', fontSize: '1.2rem', color: '#2ecc71', fontWeight: 'bold' }}>
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                <p style={{margin: 0}}>🎯 <strong>Matches:</strong>
+                                    <span style={{
+                                        marginLeft: '10px',
+                                        fontSize: '1.2rem',
+                                        color: '#2ecc71',
+                                        fontWeight: 'bold'
+                                    }}>
                     {Array.from(gameResult.responseDto.hitNumbers || []).length} / 6
                 </span>
                                 </p>
-                                <p style={{ margin: 0 }}>📊 <strong>Status:</strong>
+                                <p style={{margin: 0}}>📊 <strong>Status:</strong>
                                     <span style={{
                                         marginLeft: '10px',
                                         padding: '4px 10px',
@@ -623,7 +635,7 @@ const App: React.FC = () => {
                                 </p>
                             </div>
 
-                            <button onClick={playAgain} className="play-again-button" style={{ marginTop: '10px' }}>
+                            <button onClick={playAgain} className="play-again-button" style={{marginTop: '10px'}}>
                                 🔄 Try Another Ticket
                             </button>
                         </div>
@@ -639,21 +651,36 @@ const App: React.FC = () => {
                 </div>
                 {allTickets.length === 0 ? <p>No tickets yet.</p> :
                     allTickets.map((t, idx) => (
-                        <div key={t.ticketDto.hash} className="history-item" style={{ marginBottom: '15px' }}>
+                        <div key={t.ticketDto.hash} className="history-item" style={{marginBottom: '15px'}}>
                             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
-                                        <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>#{allTickets.length - idx}</span>
-                                        <span style={{ fontSize: '0.85rem', opacity: 0.8 }}>
+                                <div style={{flex: 1}}>
+                                    <div style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        marginBottom: '5px'
+                                    }}>
+                                        <span style={{
+                                            fontWeight: 'bold',
+                                            color: 'var(--primary-color)'
+                                        }}>#{allTickets.length - idx}</span>
+                                        <span style={{fontSize: '0.85rem', opacity: 0.8}}>
                                             📅 Purchased: {t.purchaseDate ? new Date(t.purchaseDate).toLocaleString() : 'N/A'}
                                         </span>
                                     </div>
-                                    <p style={{ margin: '5px 0' }}>Numbers: <strong>{t.ticketDto.numbers.join(', ')}</strong></p>
-                                    <div style={{ fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                        <p style={{ margin: 0, color: '#3498db' }}>
-                                            🎰 Draw Date: <strong>{new Date(t.ticketDto.drawDate).toLocaleString()}</strong>
+                                    <p style={{margin: '5px 0'}}>Numbers: <strong>{t.ticketDto.numbers.join(', ')}</strong>
+                                    </p>
+                                    <div style={{
+                                        fontSize: '0.8rem',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '2px'
+                                    }}>
+                                        <p style={{margin: 0, color: '#3498db'}}>
+                                            🎰 Draw
+                                            Date: <strong>{new Date(t.ticketDto.drawDate).toLocaleString()}</strong>
                                         </p>
-                                        <p style={{ margin: 0, opacity: 0.6 }}>ID: {t.ticketDto.hash}</p>
+                                        <p style={{margin: 0, opacity: 0.6}}>ID: {t.ticketDto.hash}</p>
                                     </div>
                                 </div>
                                 <button onClick={() => copyToClipboard(t.ticketDto.hash)} className="copy-btn-small">
@@ -665,12 +692,33 @@ const App: React.FC = () => {
                 }
             </div>
 
-            <footer className="footer-container">
-                <p>© {new Date().getFullYear()} Developed with ❤️ by <strong>Agnieszka Magura</strong></p>
-                <div className="social-links">
-                    <a href="https://github.com/AgnieszkaMagura" target="_blank" rel="noreferrer">GitHub</a>
-                    <span className="separator"> | </span>
-                    <a href="https://www.linkedin.com/in/agnieszka-magura-0714241a8/" target="_blank" rel="noreferrer">LinkedIn</a>
+            <footer className="footer-container" style={{ marginTop: '50px', borderTop: '1px solid var(--border-color)', paddingTop: '30px' }}>
+                <div className="tech-stack-section" style={{ marginBottom: '20px' }}>
+                    <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-color)', fontWeight: 'bold', opacity: 0.9, marginBottom: '15px' }}>
+                        Backend Tech Stack
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px', maxWidth: '800px', margin: '0 auto' }}>
+                        <span className="tech-badge" style={{ backgroundColor: 'rgba(52, 152, 219, 0.1)', color: '#3498db', border: '1px solid #3498db' }}>Hexagonal Architecture</span>
+                        <span className="tech-badge" style={{ backgroundColor: 'rgba(230, 126, 34, 0.1)', color: '#e67e22', border: '1px solid #e67e22' }}>Spring Boot</span>
+                        <span className="tech-badge" style={{ backgroundColor: 'rgba(241, 196, 15, 0.1)', color: '#f1c40f', border: '1px solid #f1c40f', fontWeight: 'bold' }}>Java 17</span>
+                        <span className="tech-badge" style={{ backgroundColor: 'rgba(0, 144, 204, 0.15)', color: '#007bb8', border: '1px solid #0090cc', fontWeight: 'bold' }}>Docker</span>
+                        <span className="tech-badge" style={{backgroundColor: darkMode ? 'rgba(171, 178, 185, 0.1)' : 'rgba(93, 109, 126, 0.1)', color: darkMode ? '#abb2b9' : '#5d6d7e', border: `1px solid ${darkMode ? '#abb2b9' : '#5d6d7e'}`, fontWeight: '600'}}>Lombok</span>
+                        <span className="tech-badge" style={{ backgroundColor: 'rgba(26, 188, 156, 0.1)', color: '#1abc9c', border: '1px solid #1abc9c' }}>Bean Validation</span>
+                        <span className="tech-badge" style={{ backgroundColor: 'rgba(46, 204, 113, 0.1)', color: '#2ecc71', border: '1px solid #2ecc71' }}>MongoDB</span>
+                        <span className="tech-badge" style={{ backgroundColor: 'rgba(231, 76, 60, 0.1)', color: '#e74c3c', border: '1px solid #e74c3c' }}>Redis</span>
+                        <span className="tech-badge" style={{ backgroundColor: 'rgba(232, 67, 147, 0.1)', color: '#e84393', border: '1px solid #e84393' }}>Spring Security | JWT | BCrypt</span>
+                        <span className="tech-badge" style={{ backgroundColor: 'rgba(155, 89, 182, 0.1)', color: '#9b59b6', border: '1px solid #9b59b6', fontWeight: 'bold' }}>JUnit5 | Mockito | Testcontainers | WireMock | Awaitility</span>
+                    </div>
+                </div>
+
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-color)', opacity: 0.8 }}>
+                    © {new Date().getFullYear()} Developed with ❤️ by <strong>Agnieszka Magura</strong>
+                </p>
+
+                <div className="social-links" style={{ marginTop: '10px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                    <a href="https://github.com/AgnieszkaMagura" target="_blank" rel="noreferrer" style={{ color: '#3498db', textDecoration: 'none', fontWeight: '600' }}>GitHub</a>
+                    <span style={{ opacity: 0.3 }}>|</span>
+                    <a href="https://www.linkedin.com/in/agnieszka-magura-0714241a8/" target="_blank" rel="noreferrer" style={{ color: '#3498db', textDecoration: 'none', fontWeight: '600' }}>LinkedIn</a>
                 </div>
             </footer>
         </div>
