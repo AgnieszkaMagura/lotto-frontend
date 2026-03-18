@@ -692,8 +692,8 @@ const App: React.FC = () => {
                 }
             </div>
 
-            <footer className="footer-container" style={{ marginTop: '50px', borderTop: '1px solid var(--border-color)', paddingTop: '30px' }}>
-                <div className="tech-stack-section" style={{ marginBottom: '20px' }}>
+            <footer className="footer-container" style={{ marginTop: '50px', borderTop: '1px solid var(--border-color)', paddingTop: '30px', textAlign: 'center' }}>
+                <div className="tech-stack-section" style={{ marginBottom: '25px' }}>
                     <p style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--text-color)', fontWeight: 'bold', opacity: 0.9, marginBottom: '15px' }}>
                         Backend Tech Stack
                     </p>
@@ -711,14 +711,19 @@ const App: React.FC = () => {
                     </div>
                 </div>
 
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-color)', opacity: 0.8 }}>
+                <div style={{ height: '1px', background: 'var(--border-color)', width: '100px', margin: '20px auto', opacity: 0.3 }}></div>
+
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-color)', opacity: 0.8, marginBottom: '15px' }}>
                     © {new Date().getFullYear()} Developed with ❤️ by <strong>Agnieszka Magura</strong>
                 </p>
 
-                <div className="social-links" style={{ marginTop: '10px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
-                    <a href="https://github.com/AgnieszkaMagura" target="_blank" rel="noreferrer" style={{ color: '#3498db', textDecoration: 'none', fontWeight: '600' }}>GitHub</a>
-                    <span style={{ opacity: 0.3 }}>|</span>
-                    <a href="https://www.linkedin.com/in/agnieszka-magura-0714241a8/" target="_blank" rel="noreferrer" style={{ color: '#3498db', textDecoration: 'none', fontWeight: '600' }}>LinkedIn</a>
+                <div className="social-links" style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+                    <a href="https://github.com/AgnieszkaMagura" target="_blank" rel="noreferrer">
+                        <img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" height="28" />
+                    </a>
+                    <a href="https://www.linkedin.com/in/agnieszka-magura-0714241a8/" target="_blank" rel="noreferrer">
+                        <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" height="28" />
+                    </a>
                 </div>
             </footer>
         </div>
