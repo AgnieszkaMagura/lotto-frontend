@@ -86,6 +86,30 @@ The application will automatically open at http://localhost:3000.
 * **🎉 Winner Experience:** Automated winning verification with custom Confetti animations scaling with your winnings!
 * **💾 Persistent Storage:** User sessions, theme preferences, and game history are saved in `localStorage` for a seamless experience.
 
+## 🏗️ Backend Architecture & Security
+The backend is built following the **Modular Monolith** approach with **Hexagonal Architecture** principles. This ensures a strict separation between business logic and infrastructure, using **Facades** to encapsulate module internal logic.
+
+<img width="6557" height="6623" alt="lotto architecture security v2" src="https://github.com/user-attachments/assets/8fe62ad8-c962-430e-abea-5ad17b7d40d4" />
+
+### 🧩 Logic & Security Flow
+The diagram above illustrates the request flow through security filters and how independent modules interact via their Facades:
+
+### 🔒 Security Layer (Red)
+* **Access Rules:** Centralized endpoint security management in `SecurityConfig`.
+* **Token Validation:** Every request is intercepted by `JwtAuthTokenFilter` to validate the JWT and set the authentication context.
+* **Authentication:** `JwtAuthenticatorFacade` orchestrates the login process and generates secure tokens.
+
+### 🟢 Domain Logic & Facades (Green)
+* **Number Receiver:** Validates user numbers and registers tickets for draws.
+* **Winning Generator:** Fetches winning numbers from an external API via a **Remote HTTP Client**.
+* **Result Checker:** Compares user tickets with winning numbers using isolated domain rules.
+* **Result Announcer:** Handles the logic of informing users about their winnings through a dedicated facade.
+
+### 🔵 Infrastructure & Adapters (Blue)
+* **MongoDB:** Primary persistent storage for user accounts and registered tickets.
+* **Redis:** High-performance cache for storing draw results and session data to optimize system response time.
+---
+
 ## 📅 Draw Schedule
 * **Official Draws:** Every Saturday at 12:00 PM.
 * **Verification:** You can check your ticket immediately after the draw is completed using your unique Ticket ID.
