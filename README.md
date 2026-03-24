@@ -70,12 +70,12 @@ The application will automatically open at http://localhost:3000.
 
 | Feature | Light Mode | Dark Mode |
 |:---:|:---:|:---:|
-| **Login & Auth** | <img width="2434" height="1424" alt="2" src="https://github.com/user-attachments/assets/1c592731-efa6-4c2d-9082-3442a0746b94" /> | <img width="2410" height="1422" alt="21" src="https://github.com/user-attachments/assets/de68ec52-291a-40d1-8fa2-ec1914e697fb" /> |
-| **Main Dashboard** | <img width="2420" height="1420" alt="22" src="https://github.com/user-attachments/assets/bb972d99-f26a-454e-b4a5-8ec1babad46d" /> | <img width="2414" height="1424" alt="26" src="https://github.com/user-attachments/assets/730041d4-0b8b-40f6-9503-b23f300798b4" /> | 
-| **Ticket Registration & Countdown** | <img width="2394" height="1420" alt="23" src="https://github.com/user-attachments/assets/0d078533-afe6-427f-ae3b-fc951132c033" /> | <img width="2414" height="1424" alt="25" src="https://github.com/user-attachments/assets/2d3d0e69-222e-437d-9ec8-bad37646ddd6" /> |  
-| **Purchase History** | <img width="2420" height="1420" alt="24" src="https://github.com/user-attachments/assets/4adece15-d241-4493-8b70-c3ffac16bb14" /> | <img width="2880" height="1692" alt="1" src="https://github.com/user-attachments/assets/6ff43a6c-9567-4abd-8064-2a2c698fd0c3" /> |
-| **Winning (3+ Hits) & Confetti** |  <img width="2880" height="1694" alt="2" src="https://github.com/user-attachments/assets/64801bab-4132-4425-83b2-55aadeff0f80" /> | <img width="2422" height="1420" alt="28" src="https://github.com/user-attachments/assets/2284c688-397c-4ee5-840b-7948ef96040e" />  |
-| **No Win Scenario** | <img width="2420" height="1420" alt="33" src="https://github.com/user-attachments/assets/a8a0cf2f-9f36-4280-9058-fc151dd168dc" /> | <img width="2856" height="1692" alt="34" src="https://github.com/user-attachments/assets/044ea1da-8263-4c5a-8f74-c38b5e6cd49c" /> |
+| **Login & Auth** |<img src="https://github.com/user-attachments/assets/1c592731-efa6-4c2d-9082-3442a0746b94" width="100%" /> | <img src="https://github.com/user-attachments/assets/de68ec52-291a-40d1-8fa2-ec1914e697fb" width="100%" /> |
+| **Main Dashboard** | <img src="https://github.com/user-attachments/assets/bb972d99-f26a-454e-b4a5-8ec1babad46d" width="100%" /> | <img src="https://github.com/user-attachments/assets/730041d4-0b8b-40f6-9503-b23f300798b4" width="100%" /> | 
+| **Ticket Registration & Countdown** | <img src="https://github.com/user-attachments/assets/0d078533-afe6-427f-ae3b-fc951132c033" width="100%" /> | <img src="https://github.com/user-attachments/assets/2d3d0e69-222e-437d-9ec8-bad37646ddd6" width="100%" />|  
+| **Purchase History** | <img src="https://github.com/user-attachments/assets/4adece15-d241-4493-8b70-c3ffac16bb14" width="100%" /> | <img src="https://github.com/user-attachments/assets/6ff43a6c-9567-4abd-8064-2a2c698fd0c3" width="100%" />|
+| **Winning (3+ Hits) & Confetti** |  <img src="https://github.com/user-attachments/assets/64801bab-4132-4425-83b2-55aadeff0f80" width="100%" /> | <img src="https://github.com/user-attachments/assets/2284c688-397c-4ee5-840b-7948ef96040e" width="100%" /> |
+| **No Win Scenario** | <img src="https://github.com/user-attachments/assets/a8a0cf2f-9f36-4280-9058-fc151dd168dc" width="100%" /> | <img src="https://github.com/user-attachments/assets/044ea1da-8263-4c5a-8f74-c38b5e6cd49c" width="100%" /> |
 
 ## 💡 Key Features
 * **🔐 Advanced Auth:** Secure JWT-based login/registration with strict password validation (min 6 chars, uppercase, and special symbols).
@@ -89,7 +89,9 @@ The application will automatically open at http://localhost:3000.
 ## 🏗️ Backend Architecture & Security
 The backend is built following the **Modular Monolith** approach with **Hexagonal Architecture** principles. This ensures a strict separation between business logic and infrastructure, using **Facades** to encapsulate module internal logic.
 
-<img width="6557" height="6623" alt="lotto architecture security v2" src="https://github.com/user-attachments/assets/8fe62ad8-c962-430e-abea-5ad17b7d40d4" />
+<p align="center">
+<img src="https://github.com/user-attachments/assets/8fe62ad8-c962-430e-abea-5ad17b7d40d4" alt="lotto architecture security v2" width="100%" />
+</p>
 
 ### 🧩 Logic & Security Flow
 The diagram above illustrates the request flow through security filters and how independent modules interact via their Facades:
