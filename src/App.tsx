@@ -7,6 +7,8 @@ import {useWindowSize} from 'react-use';
 import './App.css';
 import {LottoGame, ResultDto} from './types';
 
+const API_BASE_URL = 'http://ec2-3-124-216-135.eu-central-1.compute.amazonaws.com:8000';
+
 // --- UTILS ---
 const getTimeRemaining = (drawDate: string) => {
     const total = Date.parse(drawDate) - Date.parse(new Date().toISOString());
@@ -91,10 +93,29 @@ const App: React.FC = () => {
 
     // --- HELPERS ---
     const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text).then(() => {
-            setCopiedId(text);
-            setTimeout(() => setCopiedId(null), 2000);
-        });
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                setCopiedId(text);
+                setTimeout(() => setCopiedId(null), 2000);
+            });
+        } else {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            textArea.style.top = "0";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                setCopiedId(text);
+                setTimeout(() => setCopiedId(null), 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+            document.body.removeChild(textArea);
+        }
     };
 
     // --- AUTH FUNCTIONS WITH VALIDATION ---
@@ -122,7 +143,7 @@ const App: React.FC = () => {
         const endpoint = isRegistering ? '/register' : '/token';
 
         try {
-            const response = await axios.post(`http://localhost:8080${endpoint}`, {
+            const response = await axios.post(`${API_BASE_URL}${endpoint}`, {
                 username: authData.username,
                 password: authData.password
             });
@@ -194,7 +215,7 @@ const App: React.FC = () => {
 
         const token = localStorage.getItem('token');
         try {
-            const response = await axios.post<LottoGame>('http://localhost:8080/inputNumbers',
+            const response = await axios.post<LottoGame>(`${API_BASE_URL}/inputNumbers`,
                 {inputNumbers: selectedNumbers},
                 {headers: {Authorization: `Bearer ${token}`}}
             );
@@ -232,7 +253,7 @@ const App: React.FC = () => {
         const ticketInHistory = allTickets.find(t => t.ticketDto.hash === cleanHash);
 
         try {
-            const response = await axios.get<ResultDto>(`http://localhost:8080/results/${cleanHash}`,
+            const response = await axios.get<ResultDto>(`${API_BASE_URL}/results/${cleanHash}`,
                 {headers: {Authorization: `Bearer ${token}`}}
             );
 
